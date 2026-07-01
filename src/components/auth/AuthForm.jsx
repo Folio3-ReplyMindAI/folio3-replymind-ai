@@ -84,31 +84,21 @@ function SignupForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!name.trim()) {
-      setError("Full name is required");
-      return;
-    }
+    if (!name.trim()) { setError("Full name is required"); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match"); return; }
     setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Registration failed");
-      window.location.href = data.redirect || "/dashboard";
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    // Mock signup — redirect straight to onboarding
+    setTimeout(() => {
+      window.location.href = "/onboarding";
+    }, 600);
   };
 
   return (
@@ -131,9 +121,16 @@ function SignupForm() {
       <Field
         label="Password"
         type="password"
-        placeholder="Create complex password"
+        placeholder="Min. 8 characters"
         value={password}
         onChange={setPassword}
+      />
+      <Field
+        label="Confirm Password"
+        type="password"
+        placeholder="Repeat your password"
+        value={confirmPassword}
+        onChange={setConfirmPassword}
       />
       <button
         disabled={loading}
