@@ -15,16 +15,20 @@ export default function StatsCard({ icon, label, value, change, variant = "green
         tertiary: "text-on-tertiary-fixed-variant",
     };
 
-    return (<div className={`glass-card ${cardStyles[variant]} rounded-xl p-md flex flex-col gap-sm shadow-sm transition-all hover:scale-[1.02] cursor-default min-h-[140px]`}>
-      <div className="flex justify-between items-start">
-        <div className={`p-xs rounded-DEFAULT ${iconBg[variant]}`}>
-          <span className="material-symbols-outlined">{icon}</span>
+    return (
+        <div className={`glass-card ${cardStyles[variant]} rounded-xl p-md flex flex-col gap-sm shadow-sm transition-all hover:scale-[1.02] cursor-default min-h-[140px]`}>
+            <div className="flex justify-between items-start">
+                <div className={`p-xs rounded-DEFAULT ${iconBg[variant]}`}>
+                    <span className="material-symbols-outlined">{icon}</span>
+                </div>
+                {change && (
+                    <span className={`text-[12px] font-medium ${changeColors[variant]}`}>{change}</span>
+                )}
+            </div>
+            <div>
+                <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-on-surface-variant opacity-70">{label}</p>
+                <h3 className="text-[28px] font-semibold text-on-surface tracking-tight leading-tight">{value}</h3>
+            </div>
         </div>
-        {change && <span className={`font-bold font-label-sm ${changeColors[variant]}`}>{change}</span>}
-      </div>
-      <div>
-        <p className="text-on-surface-variant font-label-md uppercase tracking-widest opacity-80">{label}</p>
-        <h3 className="text-headline-md font-headline-md text-on-surface tracking-tight">{value}</h3>
-      </div>
-    </div>);
+    );
 }

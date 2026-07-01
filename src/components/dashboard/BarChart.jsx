@@ -11,7 +11,7 @@ export default function BarChart() {
     return (<div className="glass-card rounded-xl p-lg flex flex-col flex-1">
       <div className="flex justify-between items-center mb-md">
         <div>
-          <h3 className="font-headline-md text-headline-md tracking-tight">Messages by Channel</h3>
+          <h3 className="text-base font-medium">Messages by Channel</h3>
           <p className="text-on-surface-variant font-body-sm">Visual distribution of incoming inquiries</p>
         </div>
         <select className="bg-surface-container/50 backdrop-blur-sm rounded-full border-none px-md py-xs text-label-md focus:ring-primary cursor-pointer hover:bg-surface-container-high transition-colors">

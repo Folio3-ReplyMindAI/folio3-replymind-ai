@@ -1,23 +1,45 @@
 export default function ConversationCard({ chat, onSelect }) {
-    return (<div onClick={() => onSelect?.(chat)} className="conversation-card glass-card p-md rounded-xl cursor-pointer hover:shadow-md transition-all duration-200 group relative overflow-hidden" data-id={chat.id}>
-      <div className="flex gap-md relative z-10">
-        <div className="relative">
-          <img alt={chat.name} className="w-14 h-14 rounded-full object-cover border-2 border-white group-hover:scale-105 transition-transform" src={chat.avatar}/>
-          <div className="absolute bottom-0 right-0 w-6 h-6 bg-secondary-container rounded-full border-2 border-white flex items-center justify-center shadow-sm">
-            <span className="material-symbols-outlined text-[14px] text-on-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>public</span>
-          </div>
+    const unread = !chat.read;
+
+    return (
+        <div
+            onClick={() => onSelect?.(chat)}
+            className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-surface-container transition-colors duration-150"
+            data-id={chat.id}
+        >
+            {/* Avatar */}
+            <div className="relative shrink-0">
+                <img
+                    alt={chat.name}
+                    src={chat.avatar}
+                    className="w-12 h-12 rounded-full object-cover"
+                />
+                {unread && (
+                    <span className="absolute top-0 right-0 w-3 h-3 bg-primary rounded-full border-2 border-white" />
+                )}
+            </div>
+
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                    <span className={`text-sm truncate ${unread ? "font-medium text-on-surface" : "font-normal text-on-surface-variant"}`}>
+                        {chat.name}
+                    </span>
+                    <span className={`text-xs shrink-0 font-normal ${unread ? "text-primary" : "text-on-surface-variant opacity-50"}`}>
+                        {chat.time}
+                    </span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className={`text-xs truncate flex-1 ${unread ? "font-medium text-on-surface" : "font-normal text-on-surface-variant"}`}>
+                        {chat.preview}
+                    </p>
+                    {chat.draft && (
+                        <span className="shrink-0 text-[10px] font-medium text-secondary bg-secondary-container px-1.5 py-0.5 rounded-full leading-none">
+                            AI
+                        </span>
+                    )}
+                </div>
+            </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-xs">
-            <h3 className="font-label-md text-label-md text-on-surface truncate pr-4 group-hover:text-primary transition-colors">{chat.name}</h3>
-            <span className="font-label-sm text-label-sm text-on-surface-variant opacity-60">{chat.time}</span>
-          </div>
-          <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mb-sm">{chat.preview}</p>
-          <div className="ai-draft-chip p-xs pl-sm pr-md rounded-lg flex items-center gap-sm transition-transform group-hover:translate-x-1">
-            <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
-            <p className="font-label-sm text-label-sm text-on-primary-container truncate">Draft: &ldquo;{chat.draft}&rdquo;</p>
-          </div>
-        </div>
-      </div>
-    </div>);
+    );
 }
