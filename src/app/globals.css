@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens — copied 1:1 from the original Claude design export
+ * (design/ReplyMind.dc.html :root block). Do not hand-tune a color here
+ * without updating both files; see ARCHITECTURE.md#design-tokens.
+ */
+:root {
+  --color-ink: #232323;
+  --color-ink-soft: #2f2f2f;
+  --color-primary: #1e2294;
+  --color-primary-light: #e4e5f6;
+  --color-violet: #4a52c9;
+  --color-cyan: #8b90de;
+  --color-teal: #1e2294;
+  --color-amber: #4a52c9;
+  --color-coral: #83837d;
+  --color-surface: #f0efe3;
+  --color-border: #ddd9c4;
+  --color-white: #ffffff;
+  --color-bg: #f0efe3;
+  --color-text-primary: #232323;
+  --color-text-secondary: #6b6b64;
+  --color-text-muted: #83837d;
+  --color-text-on-dark: #f4f3ea;
+  --color-text-on-dark-muted: #b7b7c2;
+  --color-surface-glass: rgba(255, 255, 255, 0.6);
+  --color-border-glass: rgba(255, 255, 255, 0.5);
+
+  --gradient-brand: linear-gradient(120deg, #1e2294 0%, #4a52c9 100%);
+  --gradient-mesh-bg: radial-gradient(at 20% 20%, rgba(30, 34, 148, 0.12) 0, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(139, 144, 222, 0.22) 0, transparent 55%),
+    radial-gradient(at 50% 100%, rgba(74, 82, 201, 0.14) 0, transparent 50%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hero headline scales down before the shared max-[900px] breakpoint kicks in */
+@media (max-width: 960px) {
+  [data-jhead] {
+    font-size: 54px !important;
+  }
+}
+
+/* PageLoader's water-fill wordmark: the diagonal shimmer stripe drifts
+   sideways continuously, independent of the rise (which is driven by
+   clip-path, not background-position, so the two never fight over the
+   same CSS property). */
+@keyframes water-flow-x {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 0 0, -44px 0;
+  }
+}

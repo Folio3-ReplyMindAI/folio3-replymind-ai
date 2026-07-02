@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useScrollNav } from "@/src/hooks/useScrollNav";
-import { useReducedMotion } from "@/src/hooks/useReducedMotion";
-import { navLinks } from "@/src/lib/data/nav";
-import { MenuIcon, CloseIcon } from "@/src/components/icons";
+import { useScrollNav } from "@/hooks/useScrollNav";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { navLinks } from "@/lib/data/nav";
+import { MenuIcon, CloseIcon } from "@/components/icons";
 
 export function Navbar() {
   const scrolled = useScrollNav();
@@ -57,21 +56,12 @@ export function Navbar() {
                 {link.label}
               </a>
             ))}
-          </div>
-
-          <div className="flex items-center gap-3 max-[620px]:hidden">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-text-secondary no-underline transition-colors hover:text-text-primary"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/register"
+            <a
+              href="#pricing"
               className="rounded-[14px] bg-gradient-brand px-5 py-[11px] text-sm font-semibold text-white no-underline shadow-[0_8px_24px_rgba(30,34,148,.28)] transition-transform hover:-translate-y-px"
             >
               Start Free
-            </Link>
+            </a>
           </div>
 
           <button
@@ -112,20 +102,13 @@ export function Navbar() {
             ))}
           </div>
 
-          <Link
-            href="/login"
+          <a
+            href="#pricing"
             onClick={() => setMenuOpen(false)}
-            className="mt-auto rounded-[14px] border border-border p-4 text-center text-base font-semibold text-text-primary no-underline"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/register"
-            onClick={() => setMenuOpen(false)}
-            className="mt-3 rounded-[14px] bg-gradient-brand p-4 text-center text-base font-semibold text-white no-underline"
+            className="mt-auto rounded-[14px] bg-gradient-brand p-4 text-center text-base font-semibold text-white no-underline"
           >
             Start Free
-          </Link>
+          </a>
         </div>
       )}
     </>
