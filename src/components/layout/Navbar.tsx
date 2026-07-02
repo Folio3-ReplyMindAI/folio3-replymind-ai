@@ -42,7 +42,7 @@ export function Navbar() {
         <div className="mx-auto flex h-[76px] max-w-[1180px] items-center justify-between px-6">
           <a
             href="#top"
-            className="bg-gradient-brand bg-clip-text font-display text-[22px] font-bold tracking-[-0.02em] text-transparent no-underline"
+            className="bg-gradient-brand bg-clip-text font-display text-[25px] font-bold tracking-[-0.02em] text-transparent no-underline"
           >
             ReplyMind
           </a>
