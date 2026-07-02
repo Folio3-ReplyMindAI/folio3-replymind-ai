@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { footerLinks } from "@/lib/data/footer";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
+import { footerLinks } from "@/src/lib/data/footer";
 
 const WORDMARK = "ReplyMind";
 

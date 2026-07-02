@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAppReady } from "@/hooks/useAppReady";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useAppReady } from "@/src/hooks/useAppReady";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
 
 const SLIDE_DURATION_MS = 700;
 const POST_FILL_PAUSE_MS = 250;
