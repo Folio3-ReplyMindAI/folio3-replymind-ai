@@ -1,12 +1,14 @@
 {
-  "name": "frontend",
+  "name": "replymind-web",
   "version": "0.1.0",
   "private": true,
+  "description": "ReplyMind marketing site — Next.js clone of the original Claude design export.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -63,8 +65,10 @@
     "@tailwindcss/postcss": "^4",
     "@types/node": "26.0.1",
     "@types/react": "19.2.17",
+    "@types/react-dom": "^18.3.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "^5.5.3"
   }
 }
