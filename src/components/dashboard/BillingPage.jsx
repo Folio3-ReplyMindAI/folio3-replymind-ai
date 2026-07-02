@@ -344,18 +344,18 @@ export default function BillingPage() {
               role="dialog"
               aria-modal="true"
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl p-6 animate-rm-slidein"
+              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl overflow-hidden animate-rm-slidein"
             >
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-primary">
+              <div className="flex items-start gap-4 p-6">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary-container text-primary">
                   <span className="material-symbols-outlined text-[22px]">south</span>
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-semibold text-on-surface">
+                  <h2 className="text-base font-semibold text-on-surface leading-snug">
                     Downgrade to {downgradeTarget.name}?
-                  </p>
-                  <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
-                    Are you sure? Your plan drops from{" "}
+                  </h2>
+                  <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+                    Your plan drops from{" "}
                     <span className="font-medium text-on-surface">{currentPlan.name}</span> to{" "}
                     <span className="font-medium text-on-surface">{downgradeTarget.name}</span>{" "}
                     ({downgradeTarget.messages}) at the end of this billing cycle. Features
@@ -363,7 +363,7 @@ export default function BillingPage() {
                   </p>
                 </div>
               </div>
-              <div className="mt-5 flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/40">
                 <button
                   onClick={() => setDowngradeTarget(null)}
                   className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
@@ -394,21 +394,24 @@ export default function BillingPage() {
               role="dialog"
               aria-modal="true"
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl p-6 animate-rm-slidein"
+              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl overflow-hidden animate-rm-slidein"
             >
-              <div className="flex flex-col items-center text-center gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-error-container text-error">
-                  <span className="material-symbols-outlined text-[24px]">warning</span>
+              <div className="flex items-start gap-4 p-6">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-error-container text-error">
+                  <span className="material-symbols-outlined text-[22px]">warning</span>
                 </span>
-                <div className="min-w-0">
-                  <p className="text-base font-semibold text-on-surface">Cancel your subscription?</p>
-                  <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed max-w-xs mx-auto">
-                    Your plan stays active until the end of this billing cycle, then drops to Free.
-                    This can&apos;t be undone from here.
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-semibold text-on-surface leading-snug">
+                    Cancel your subscription?
+                  </h2>
+                  <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+                    Your <span className="font-medium text-on-surface">{currentPlan.name}</span>{" "}
+                    plan stays active until the end of this billing cycle, then your account
+                    drops to Free. This can&apos;t be undone from here.
                   </p>
                 </div>
               </div>
-              <div className="mt-5 flex items-center justify-center gap-2">
+              <div className="flex items-center justify-end gap-2 px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/40">
                 <button
                   onClick={() => setCancelConfirm(false)}
                   className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"

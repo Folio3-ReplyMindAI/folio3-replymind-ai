@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Mock tenant — matches tenants table schema
 const MOCK_TENANT = {
@@ -186,6 +187,7 @@ function useSaved() {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [biz, setBiz] = useState({
     business_name: MOCK_TENANT.business_name,
     business_type: MOCK_TENANT.business_type,
@@ -267,6 +269,14 @@ export default function ProfilePage() {
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="ml-auto flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant/50 text-sm font-medium text-on-surface-variant hover:border-error hover:text-error hover:bg-error-container/40 active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+            Log out
+          </button>
         </div>
 
         {/* ── Business Details ── */}

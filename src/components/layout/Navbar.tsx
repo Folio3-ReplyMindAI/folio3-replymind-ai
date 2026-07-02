@@ -39,7 +39,7 @@ export function Navbar() {
             : "background .2s ease, box-shadow .2s ease, border-color .2s ease, transform .55s cubic-bezier(.22,1,.36,1), opacity .55s cubic-bezier(.22,1,.36,1)",
         }}
       >
-        <div className="mx-auto flex h-[76px] max-w-[1180px] items-center justify-start gap-6 px-6">
+        <div className="mx-auto flex h-[76px] max-w-[1180px] items-center justify-between px-6">
           <a
             href="#top"
             className="bg-gradient-brand bg-clip-text font-display text-[22px] font-bold tracking-[-0.02em] text-transparent no-underline"
@@ -47,7 +47,7 @@ export function Navbar() {
             ReplyMind
           </a>
 
-          <div className="ml-auto flex items-center gap-[30px] max-[620px]:hidden">
+          <div className="flex items-center gap-[30px] max-[620px]:hidden">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -77,7 +77,7 @@ export function Navbar() {
           <button
             aria-label="Open menu"
             onClick={() => setMenuOpen(true)}
-            className="ml-auto hidden cursor-pointer border-none bg-transparent p-2 text-text-primary max-[620px]:inline-flex"
+            className="hidden cursor-pointer border-none bg-transparent p-2 text-text-primary max-[620px]:inline-flex"
           >
             <MenuIcon width={26} height={26} strokeWidth="1.8" />
           </button>

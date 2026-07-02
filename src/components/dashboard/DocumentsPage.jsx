@@ -168,24 +168,34 @@ function UploadDialog({ target, onUpload, onClose }) {
                 role="dialog"
                 aria-modal="true"
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-lg rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-5 animate-rm-slidein"
+                className="w-full max-w-lg rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl overflow-hidden animate-rm-slidein"
             >
-                <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <h2 className="text-lg font-medium text-on-surface">
-                            {target ? "Replace document" : "Upload document"}
-                        </h2>
-                        <p className="text-sm text-on-surface-variant mt-0.5">
-                            {target
-                                ? <>Uploading a new file for <span className="font-medium text-on-surface">{target.file_name}</span> (v{target.version} → v{target.version + 1}).</>
-                                : "Add a new document to your AI knowledge base."}
-                        </p>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 px-6 py-5 border-b border-outline-variant/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-container/40 text-primary">
+                            <span className="material-symbols-outlined text-[20px]">
+                                {target ? "sync_alt" : "note_add"}
+                            </span>
+                        </span>
+                        <div className="min-w-0">
+                            <h2 className="text-base font-semibold text-on-surface leading-snug">
+                                {target ? "Replace document" : "Upload document"}
+                            </h2>
+                            <p className="text-sm text-on-surface-variant mt-0.5 truncate">
+                                {target
+                                    ? <>New file for <span className="font-medium text-on-surface">{target.file_name}</span> (v{target.version} → v{target.version + 1})</>
+                                    : "Add a new document to your AI knowledge base."}
+                            </p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-1.5 hover:bg-surface-container-high rounded-full shrink-0" title="Close">
                         <span className="material-symbols-outlined text-on-surface-variant text-[20px]">close</span>
                     </button>
                 </div>
 
+                {/* Body */}
+                <div className="p-6 flex flex-col gap-4">
                 {/* Dropzone */}
                 <button
                     onClick={() => inputRef.current?.click()}
@@ -211,9 +221,9 @@ function UploadDialog({ target, onUpload, onClose }) {
                 </button>
 
                 {error && (
-                    <div className="flex items-center gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
-                        <span className="material-symbols-outlined text-[18px]">error</span>
-                        {error}
+                    <div className="flex items-start gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
+                        <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+                        <span className="min-w-0">{error}</span>
                     </div>
                 )}
 
@@ -224,6 +234,7 @@ function UploadDialog({ target, onUpload, onClose }) {
                     className="hidden"
                     onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ""; }}
                 />
+                </div>
             </div>
         </div>
     );

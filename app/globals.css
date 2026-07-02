@@ -224,6 +224,15 @@ body {
   50% { opacity: 1; }
 }
 
+/* PageLoader's water-fill wordmark: the diagonal shimmer stripe drifts
+   sideways continuously, independent of the rise (which is driven by
+   clip-path, not background-position, so the two never fight over the
+   same CSS property). */
+@keyframes water-flow-x {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 0 0, -44px 0; }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

@@ -1,4 +1,5 @@
 import { Navbar } from "@/src/components/layout/Navbar";
+import { PageLoader } from "@/src/components/loader/PageLoader";
 import { Footer } from "@/src/components/layout/Footer";
 import { Hero } from "@/src/components/home/Hero";
 import { SocialProof } from "@/src/components/home/SocialProof";
@@ -13,6 +14,7 @@ import { CTABanner } from "@/src/components/home/CTABanner";
 export default function HomePage() {
   return (
     <>
+      <PageLoader />
       <Navbar />
       <Hero />
       <SocialProof />

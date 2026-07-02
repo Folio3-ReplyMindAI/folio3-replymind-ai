@@ -1,5 +1,4 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { PageLoader } from "@/src/components/loader/PageLoader";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,10 +37,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>
-        <PageLoader />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
