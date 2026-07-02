@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-const MIN_DURATION_MS = 1200;
+const MIN_DURATION_MS = 7000;
 
 /**
  * Gates the loading screen: becomes true once fonts + all page resources
  * have finished loading AND a minimum display duration has elapsed. The
- * minimum keeps the loader from flashing for a few ms on fast connections —
- * it reads as an intentional intro, not a stall — while still never
- * blocking longer than the page actually needs to become ready.
+ * minimum is intentionally long (~7s, within the requested 5-10s range) so
+ * the whole landing page — Hero's layout measurements, images, fonts — has
+ * time to fully settle behind it before it's revealed, rather than just
+ * covering the bare minimum flash of an unstyled page.
  */
 export function useAppReady(): boolean {
   const [ready, setReady] = useState(false);

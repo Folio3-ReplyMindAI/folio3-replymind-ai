@@ -2,12 +2,19 @@
 
 ## Scope
 
-This repo is the **marketing landing page only** — a faithful clone of
-`design/ReplyMind.dc.html`. There is no auth, no database, no real inbox, and
-no AI backend. Every "Start Free" / "Send" / "Get Started" control is a
-static link (mostly `#pricing`, `#top` anchors) exactly as in the source
-design. If ReplyMind ever becomes a real product, that's a separate,
-much larger project — this one is deliberately just the front door.
+This repo is the **marketing site only** — the landing page is a faithful
+clone of `design/ReplyMind.dc.html`. There is no auth, no database, no real
+inbox, and no AI backend. Every "Start Free" / "Send" / "Get Started" control
+on the landing page is a static link (mostly `#pricing`, `#top` anchors)
+exactly as in the source design. If ReplyMind ever becomes a real product,
+that's a separate, much larger project — this one is deliberately just the
+front door.
+
+`/login` and `/signup` (`src/app/login`, `src/app/signup`) are static UI
+only, same rule: the forms don't submit anywhere (submit buttons are
+`type="button"`, not real form submissions) — they exist to show what the
+brand's auth screens would look like, not to authenticate anyone. Wiring
+them to a real backend is out of scope here for the same reason as above.
 
 ## Why Next.js App Router
 

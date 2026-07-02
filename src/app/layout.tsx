@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { PageLoader } from "@/components/loader/PageLoader";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,10 +43,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
-        <PageLoader />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
