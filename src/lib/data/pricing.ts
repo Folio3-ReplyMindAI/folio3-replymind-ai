@@ -21,7 +21,7 @@ export const pricingPlans: PricingPlan[] = [
     period: "/mo",
     billingNote: "Forever. No card needed.",
     cta: "Get Started Free",
-    href: "/register",
+    href: "#top",
     features: [
       { label: "100 AI-drafted replies / mo", included: true },
       { label: "Website widget only", included: true },
@@ -35,7 +35,7 @@ export const pricingPlans: PricingPlan[] = [
     period: "/mo",
     billingNote: "Billed monthly. Cancel anytime.",
     cta: "Start Pro Free for 14 Days",
-    href: "/register",
+    href: "#top",
     featured: true,
     features: [
       { label: "Unlimited replies", included: true },
@@ -51,7 +51,7 @@ export const pricingPlans: PricingPlan[] = [
     period: "/mo",
     billingNote: "For growing teams.",
     cta: "Start Business Free for 14 Days",
-    href: "/register",
+    href: "#top",
     features: [
       { label: "Everything in Pro", included: true },
       { label: "Unlimited documents", included: true },
