@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { JourneyGraphic, JOURNEY_WIDTH } from "./hero/JourneyGraphic";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { ArrowRightIcon } from "@/components/icons";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
+import { ArrowRightIcon } from "@/src/components/icons";
 
 /**
  * Hero header: the "journey" animation and the headline both live inside a
@@ -236,12 +237,12 @@ export function Hero() {
             reply the moment a message lands, then waits for your call.
           </p>
           <div style={introStyle(2)} className="mt-7 flex flex-wrap gap-3.5">
-            <a
-              href="#pricing"
+            <Link
+              href="/register"
               className="inline-flex items-center rounded-[14px] bg-gradient-brand px-[26px] py-[15px] text-base font-semibold text-white no-underline shadow-[0_20px_50px_rgba(30,34,148,.28)] transition-transform hover:-translate-y-px"
             >
               Start Free
-            </a>
+            </Link>
             <a
               href="#demo"
               className="inline-flex items-center gap-2 rounded-[14px] border border-border bg-white/60 px-[22px] py-[15px] text-base font-semibold text-text-primary no-underline transition-colors hover:border-primary hover:text-primary"

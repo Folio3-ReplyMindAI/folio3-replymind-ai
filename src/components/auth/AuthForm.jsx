@@ -1,26 +1,116 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState } from "react";
-import Field from "@/src/components/common/Field";
+import Link from "next/link";
+import Icon from "@/src/components/ui/Icon";
 
-const variants = {
-  enter: (dir) => ({ x: dir * 100, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (dir) => ({ x: dir * -100, opacity: 0 }),
-};
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/* ── Underline input with a leading icon + trailing status slot ── */
+function AuthField({ icon, type = "text", placeholder, value, onChange, trailing, invalid, error }) {
+  return (
+    <div>
+      <div
+        className={`group flex items-center gap-3 border-b py-2.5 transition-colors focus-within:border-primary ${
+          invalid ? "border-error" : "border-outline-variant/70"
+        }`}
+      >
+        <Icon
+          name={icon}
+          className={`text-[20px] group-focus-within:text-primary ${invalid ? "text-error" : "text-text-secondary/70"}`}
+        />
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none"
+        />
+        {trailing}
+      </div>
+      {invalid && error && <p className="mt-1 text-xs text-error">{error}</p>}
+    </div>
+  );
+}
+
+/* ── Green tick shown when a field passes validation ── */
+function ValidTick({ ok }) {
+  return (
+    <span
+      className={`flex h-5 w-5 items-center justify-center rounded-full transition-all ${
+        ok ? "bg-emerald-500 text-white scale-100" : "scale-0"
+      }`}
+    >
+      <Icon name="check" className="text-[14px]" />
+    </span>
+  );
+}
+
+/* ── Password requirement row ── */
+function Rule({ ok, children }) {
+  return (
+    <li className={`flex items-center gap-1.5 transition-colors ${ok ? "text-emerald-600" : "text-text-secondary/50"}`}>
+      <Icon name={ok ? "check" : "remove"} className="text-[15px]" />
+      {children}
+    </li>
+  );
+}
+
+/* ── Google icon button (Facebook removed) ── */
+function SocialRow() {
+  return (
+    <div className="flex items-center gap-4">
+      <span className="text-sm text-text-secondary/70">Or</span>
+      <button
+        type="button"
+        aria-label="Continue with Google"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-outline-variant/70 bg-white transition-all hover:shadow-sm active:scale-95"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function SubmitButton({ loading, children }) {
+  return (
+    <button
+      disabled={loading}
+      className="group inline-flex items-center gap-2 rounded-full bg-gradient-brand pl-7 pr-2 py-1.5 text-sm font-semibold text-white shadow-[0_16px_36px_-12px_rgba(30,34,148,0.6)] transition-all hover:-translate-y-px active:scale-95 disabled:opacity-60"
+    >
+      {children}
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-0.5">
+        <Icon name="arrow_forward" className="text-[18px]" />
+      </span>
+    </button>
+  );
+}
+
+/* ── Login ── */
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const [error, setError] = useState("");
 
   const MOCK_EMAIL = "demo@replymind.com";
   const MOCK_PASSWORD = "demo123";
 
+  const emailOk = EMAIL_RE.test(email);
+  const passOk = password.length > 0;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAttempted(true);
     setError("");
+    if (!emailOk || !passOk) return;
     setLoading(true);
     try {
       if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
@@ -43,166 +133,183 @@ function LoginForm() {
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-      <Field
-        label="Email Address"
+    <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+      {error && <p className="text-sm text-error text-center">{error}</p>}
+      <AuthField
+        icon="person"
         type="email"
-        placeholder="owner@business.com"
+        placeholder="Email address"
         value={email}
         onChange={setEmail}
+        invalid={attempted && !emailOk}
+        error={!email ? "Email is required" : "Enter a valid email address"}
+        trailing={<ValidTick ok={emailOk} />}
       />
-      <Field
-        label="Password"
-        type="password"
-        placeholder="••••••••"
+      <AuthField
+        icon="lock"
+        type={show ? "text" : "password"}
+        placeholder="Password"
         value={password}
         onChange={setPassword}
-        rightLabel={
-          <a
-            className="text-sm text-primary font-medium hover:underline"
-            href="#"
-          >
-            Forgot?
-          </a>
+        invalid={attempted && !passOk}
+        error="Password is required"
+        trailing={
+          <button type="button" onClick={() => setShow((s) => !s)} aria-label="Toggle password" className="text-text-secondary/70 hover:text-primary">
+            <Icon name={show ? "visibility" : "visibility_off"} className="text-[20px]" />
+          </button>
         }
       />
-      <button
-        disabled={loading}
-        className="w-full h-[48px] bg-primary text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/15 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? "Signing in…" : "Sign In"}
-      </button>
-      <p className="text-xs text-center text-on-surface-variant/60 pt-1">
-        Demo: <span className="font-medium text-on-surface-variant">demo@replymind.com</span> / <span className="font-medium text-on-surface-variant">demo123</span>
+      <div className="flex justify-end">
+        <a href="#" className="text-xs font-medium text-primary hover:underline">Forgot password?</a>
+      </div>
+
+      <div className="flex items-center gap-4 pt-1">
+        <SubmitButton loading={loading}>{loading ? "Signing in…" : "Sign In"}</SubmitButton>
+        <SocialRow />
+      </div>
+
+      <p className="text-xs text-text-secondary/60">
+        Demo: <span className="font-medium text-text-secondary">demo@replymind.com</span> / <span className="font-medium text-text-secondary">demo123</span>
       </p>
     </form>
   );
 }
 
+/* ── Signup ── */
 function SignupForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const nameOk = name.trim().length > 1;
+  const emailOk = EMAIL_RE.test(email);
+  const lenOk = password.length >= 8;
+  const numOk = /[0-9!@#$%^&*]/.test(password);
+  const caseOk = /[a-z]/.test(password) && /[A-Z]/.test(password);
+  const passOk = lenOk && numOk && caseOk;
+  const matchOk = confirm.length > 0 && password === confirm;
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+    setAttempted(true);
     setError("");
-    if (!name.trim()) { setError("Full name is required"); return; }
-    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
-    if (password !== confirmPassword) { setError("Passwords do not match"); return; }
+    if (!nameOk || !emailOk || !passOk || !matchOk) return;
     setLoading(true);
-    // Mock signup — redirect straight to onboarding
     setTimeout(() => {
       window.location.href = "/onboarding";
     }, 600);
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-      <Field
-        label="Full Name"
-        type="text"
-        placeholder="Jane Doe"
+    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+      {error && <p className="text-sm text-error text-center">{error}</p>}
+      <AuthField
+        icon="person"
+        placeholder="Full name"
         value={name}
         onChange={setName}
+        invalid={attempted && !nameOk}
+        error="Please enter your full name"
+        trailing={<ValidTick ok={nameOk} />}
       />
-      <Field
-        label="Work Email"
+      <AuthField
+        icon="alternate_email"
         type="email"
-        placeholder="jane@company.com"
+        placeholder="Work email"
         value={email}
         onChange={setEmail}
+        invalid={attempted && !emailOk}
+        error={!email ? "Email is required" : "Enter a valid email address"}
+        trailing={<ValidTick ok={emailOk} />}
       />
-      <Field
-        label="Password"
-        type="password"
-        placeholder="Min. 8 characters"
+      <AuthField
+        icon="lock"
+        type={show ? "text" : "password"}
+        placeholder="Password"
         value={password}
         onChange={setPassword}
+        invalid={attempted && !passOk}
+        trailing={
+          <button type="button" onClick={() => setShow((s) => !s)} aria-label="Toggle password" className="text-text-secondary/70 hover:text-primary">
+            <Icon name={show ? "visibility" : "visibility_off"} className="text-[20px]" />
+          </button>
+        }
       />
-      <Field
-        label="Confirm Password"
-        type="password"
-        placeholder="Repeat your password"
-        value={confirmPassword}
-        onChange={setConfirmPassword}
+      <ul className="space-y-1 pl-1 text-xs">
+        <Rule ok={lenOk}>At least 8 characters</Rule>
+        <Rule ok={numOk}>At least one number (0-9) or a symbol</Rule>
+        <Rule ok={caseOk}>Lowercase (a-z) and uppercase (A-Z)</Rule>
+      </ul>
+      <AuthField
+        icon="lock_reset"
+        type={show ? "text" : "password"}
+        placeholder="Re-type password"
+        value={confirm}
+        onChange={setConfirm}
+        invalid={attempted && !matchOk}
+        error={!confirm ? "Please re-type your password" : "Passwords do not match"}
+        trailing={<ValidTick ok={matchOk} />}
       />
-      <button
-        disabled={loading}
-        className="w-full h-[48px] bg-primary text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/15 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? "Creating account…" : "Create Account"}
-      </button>
+
+      <div className="flex items-center gap-4 pt-2">
+        <SubmitButton loading={loading}>{loading ? "Creating…" : "Sign Up"}</SubmitButton>
+        <SocialRow />
+      </div>
     </form>
   );
 }
 
 export default function AuthForm({ initialMode = "login" }) {
-  const [mode, setMode] = useState(initialMode);
-  const [prevMode, setPrevMode] = useState(initialMode);
-
-  const switchMode = (next) => {
-    setPrevMode(mode);
-    setMode(next);
-  };
-
-  const direction = mode === "signup" ? -1 : 1;
-  const prevDirection = prevMode === "signup" ? -1 : 1;
+  const isLogin = initialMode === "login";
 
   return (
-    <div>
-      {/* Pill Toggle */}
-      <div className="bg-surface-container-high p-1 rounded-full flex mb-6 w-full max-w-[340px] mx-auto border border-outline-variant/20 shadow-inner">
-        {["login", "signup"].map((t) => (
-          <button
-            key={t}
-            onClick={() => switchMode(t)}
-            className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-              mode === t
-                ? "bg-primary text-on-primary shadow-md"
-                : "text-on-surface-variant hover:bg-white/50"
-            }`}
-          >
-            {t === "login" ? "Login" : "Sign Up"}
-          </button>
-        ))}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="mx-auto w-full max-w-[400px]"
+    >
+      {/* Top row — back to home + switch link */}
+      <div className="mb-8 flex items-center justify-between">
+        <Link
+          href="/"
+          aria-label="Back to home"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant/70 text-text-secondary transition-colors hover:border-primary hover:text-primary"
+        >
+          <Icon name="arrow_back" className="text-[18px]" />
+        </Link>
+        <p className="text-sm text-text-secondary">
+          {isLogin ? "New here?" : "Already a member?"}{" "}
+          <Link href={isLogin ? "/register" : "/login"} className="font-semibold text-primary hover:underline">
+            {isLogin ? "Sign up" : "Sign in"}
+          </Link>
+        </p>
       </div>
 
-      {/* Animated Form Content */}
-      <div className="relative w-full max-w-[380px] min-h-[340px] mx-auto overflow-hidden">
-        <AnimatePresence mode="popLayout" custom={direction}>
-          {mode === "login" ? (
-            <motion.div
-              key="login"
-              custom={prevDirection}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <LoginForm />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="signup"
-              custom={prevDirection}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <SignupForm />
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Heading */}
+      <div className="mb-7">
+        <div className="mb-4 flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-brand text-white">
+            <Icon name="psychology" filled className="text-[20px]" />
+          </span>
+          <span className="text-base font-bold tracking-tight text-text-primary font-display">ReplyMind</span>
+        </div>
+        <h1 className="text-[40px] font-bold leading-none tracking-tight text-text-primary font-display">
+          {isLogin ? "Sign In" : "Sign Up"}
+        </h1>
+        <p className="mt-2 text-sm text-text-secondary">
+          {isLogin
+            ? "Welcome back — let's get to your inbox."
+            : "Secure your customer conversations with ReplyMind."}
+        </p>
       </div>
-    </div>
+
+      {isLogin ? <LoginForm /> : <SignupForm />}
+    </motion.div>
   );
 }

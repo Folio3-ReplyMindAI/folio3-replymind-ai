@@ -56,7 +56,6 @@ const DRAFT_FREQUENCY_OPTIONS = [
   { value: "most", label: "Most of them" },
   { value: "average", label: "Average amount" },
   { value: "less", label: "Very less" },
-  { value: "none", label: "None" },
 ];
 
 const AUTO_SEND_OPTIONS = [
@@ -191,15 +190,20 @@ export default function ProfilePage() {
     business_name: MOCK_TENANT.business_name,
     business_type: MOCK_TENANT.business_type,
   });
+  // The heading shows the last *saved* name — typing in the field only
+  // updates it once Save is clicked.
+  const [savedName, setSavedName] = useState(MOCK_TENANT.business_name);
   const [ai, setAi] = useState({
     bot_persona: MOCK_TENANT.bot_persona,
     bot_language: MOCK_TENANT.bot_language,
   });
   const [conf, setConf] = useState({
+    enabled: true,
     draft_frequency: "average",
-    auto_reply_enabled: MOCK_TENANT.auto_reply_level !== "never",
+    auto_reply_enabled: true,
     auto_send_threshold: "safe",
   });
+  const [autoReplyError, setAutoReplyError] = useState("");
 
   const [channels, setChannels] = useState(MOCK_CHANNELS); // ← add this
 
@@ -207,6 +211,29 @@ export default function ProfilePage() {
   const [aiSaved, triggerAiSave] = useSaved();
   const [confSaved, triggerConfSave] = useSaved();
   const [channelSaved, triggerChannelSave] = useSaved();
+
+  const handleBizSave = () => {
+    setSavedName(biz.business_name);
+    triggerBizSave();
+  };
+
+  // Confidence master toggle drives auto-reply: turning it off switches
+  // auto-reply off too, turning it on brings auto-reply back on.
+  const handleConfidenceToggle = (v) => {
+    setAutoReplyError("");
+    setConf({ ...conf, enabled: v, auto_reply_enabled: v });
+  };
+
+  const handleAutoReplyToggle = (v) => {
+    if (!conf.enabled) {
+      setAutoReplyError(
+        "Auto-reply can't be turned on while Confidence & Autonomy is off — the AI needs drafting enabled to send replies. Turn the toggle above on first."
+      );
+      return;
+    }
+    setAutoReplyError("");
+    setConf({ ...conf, auto_reply_enabled: v });
+  };
   return (
     <div className="overflow-y-auto flex-1 px-gutter md:px-xl pb-gutter md:pb-xl pt-lg custom-scrollbar">
       <div className="max-w-2xl mx-auto flex flex-col gap-lg">
@@ -223,7 +250,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <h2 className="text-2xl font-medium text-on-surface leading-tight">
-              {biz.business_name}
+              {savedName}
             </h2>
             <div className="flex items-center gap-2 mt-1">
               <span
@@ -277,7 +304,7 @@ export default function ProfilePage() {
               </select>
             </div>
           </div>
-          <SaveButton saved={bizSaved} onClick={triggerBizSave} />
+          <SaveButton saved={bizSaved} onClick={handleBizSave} />
         </SectionCard>
 
         {/* ── AI Configuration ── */}
@@ -338,23 +365,40 @@ export default function ProfilePage() {
           description="Control how often the AI drafts answers and when it can send them automatically."
         >
           <div className="flex flex-col gap-6">
-            {/* Draft frequency */}
-            <div className="flex flex-col gap-3">
+            {/* Master toggle — on by default; switching it off also turns
+                auto-reply off */}
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-on-surface mb-0.5">
-                  How often should the AI draft an answer?
+                  Enable AI Drafting
                 </p>
                 <p className="text-xs text-on-surface-variant">
-                  Choose how active the AI should be when reading your uploaded
-                  knowledge documents.
+                  Let the AI read your knowledge documents and draft answers.
+                  Turning this off also disables Auto-Reply.
                 </p>
               </div>
-              <SegmentedGroup
-                options={DRAFT_FREQUENCY_OPTIONS}
-                value={conf.draft_frequency}
-                onChange={(v) => setConf({ ...conf, draft_frequency: v })}
-              />
+              <Toggle checked={conf.enabled} onChange={handleConfidenceToggle} />
             </div>
+
+            {/* Draft frequency — only relevant while drafting is enabled */}
+            {conf.enabled && (
+              <div className="flex flex-col gap-3 pl-4 border-l-2 border-primary-fixed-dim">
+                <div>
+                  <p className="text-sm font-medium text-on-surface mb-0.5">
+                    How often should the AI draft an answer?
+                  </p>
+                  <p className="text-xs text-on-surface-variant">
+                    Choose how active the AI should be when reading your uploaded
+                    knowledge documents.
+                  </p>
+                </div>
+                <SegmentedGroup
+                  options={DRAFT_FREQUENCY_OPTIONS}
+                  value={conf.draft_frequency}
+                  onChange={(v) => setConf({ ...conf, draft_frequency: v })}
+                />
+              </div>
+            )}
 
             <div className="h-px bg-outline-variant/40 w-full" />
 
@@ -371,9 +415,16 @@ export default function ProfilePage() {
               </div>
               <Toggle
                 checked={conf.auto_reply_enabled}
-                onChange={(v) => setConf({ ...conf, auto_reply_enabled: v })}
+                onChange={handleAutoReplyToggle}
               />
             </div>
+
+            {autoReplyError && (
+              <div className="flex items-start gap-2 rounded-xl bg-error-container/60 px-4 py-3 text-xs text-error animate-rm-slidein">
+                <span className="material-symbols-outlined text-[16px] shrink-0">error</span>
+                {autoReplyError}
+              </div>
+            )}
 
             {/* Auto-send threshold — shown only when auto-reply is on */}
             {conf.auto_reply_enabled && (

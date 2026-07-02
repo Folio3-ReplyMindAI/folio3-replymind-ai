@@ -1,5 +1,5 @@
-import { Reveal } from "@/components/ui/Reveal";
-import { WhatsAppIcon, EmailIcon, WebsiteIcon, SendIcon } from "@/components/icons";
+import { Reveal } from "@/src/components/ui/Reveal";
+import { WhatsAppIcon, EmailIcon, WebsiteIcon, SendIcon } from "@/src/components/icons";
 
 const inboxRows = [
   { icon: <WhatsAppIcon width={14} height={14} strokeWidth="1.8" />, bg: "var(--color-teal)", name: "Amina · WhatsApp", preview: "Do you deliver on Sundays?", time: "2m" },

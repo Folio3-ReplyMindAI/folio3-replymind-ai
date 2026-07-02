@@ -17,11 +17,6 @@ export default function Header({ onProfileClick }) {
 
             {/* Right side */}
             <div className="flex items-center gap-md">
-                <button className="p-xs rounded-full hover:bg-surface-container-high transition-colors relative hover:scale-110 group">
-                    <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary">notifications</span>
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full border-2 border-white" />
-                </button>
-
                 <div className="relative group/avatar">
                     <button
                         onClick={onProfileClick}

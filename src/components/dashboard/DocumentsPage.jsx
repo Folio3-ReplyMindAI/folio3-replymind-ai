@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 // ─── Mock data (schema-aligned) ───────────────────────────────────────────────
 
@@ -124,7 +124,112 @@ function StatusBadge({ status }) {
     );
 }
 
-function DocumentRow({ doc, onDelete }) {
+// ─── Upload dialog ────────────────────────────────────────────────────────────
+// Modal dialog used for both "Upload" (target === null) and "Replace"
+// (target === existing doc). Opens on top of the documents list — no page
+// swap. Functional: a real file picker + drag-and-drop, then the chosen file
+// lands in the document list.
+
+function UploadDialog({ target, onUpload, onClose }) {
+    const inputRef = useRef(null);
+    const [dragging, setDragging] = useState(false);
+    const [error, setError] = useState("");
+
+    const ACCEPTED = ["pdf", "docx", "txt"];
+    const MAX_BYTES = 10 * 1024 * 1024;
+
+    const handleFile = (file) => {
+        if (!file) return;
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!ACCEPTED.includes(ext)) {
+            setError(`Unsupported format ".${ext}" — use PDF, DOCX or TXT.`);
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            setError("File is larger than 10 MB.");
+            return;
+        }
+        setError("");
+        onUpload(file, ext);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragging(false);
+        handleFile(e.dataTransfer.files?.[0]);
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
+            onClick={onClose}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-lg rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-5 animate-rm-slidein"
+            >
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-medium text-on-surface">
+                            {target ? "Replace document" : "Upload document"}
+                        </h2>
+                        <p className="text-sm text-on-surface-variant mt-0.5">
+                            {target
+                                ? <>Uploading a new file for <span className="font-medium text-on-surface">{target.file_name}</span> (v{target.version} → v{target.version + 1}).</>
+                                : "Add a new document to your AI knowledge base."}
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="p-1.5 hover:bg-surface-container-high rounded-full shrink-0" title="Close">
+                        <span className="material-symbols-outlined text-on-surface-variant text-[20px]">close</span>
+                    </button>
+                </div>
+
+                {/* Dropzone */}
+                <button
+                    onClick={() => inputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={handleDrop}
+                    className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 transition-all ${
+                        dragging
+                            ? "border-primary bg-primary-container/30 scale-[1.01]"
+                            : "border-outline-variant/70 bg-surface-container-lowest hover:border-primary/60 hover:bg-primary-container/10"
+                    }`}
+                >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-lg shadow-primary/25">
+                        <span className="material-symbols-outlined text-[24px]">upload_file</span>
+                    </span>
+                    <div className="text-center">
+                        <p className="text-sm font-semibold text-on-surface">Upload from device</p>
+                        <p className="text-xs text-on-surface-variant mt-1">Click to browse, or drag &amp; drop a file here</p>
+                    </div>
+                    <span className="rounded-full bg-surface-container-high px-3 py-1 text-xs text-on-surface-variant">
+                        PDF · DOCX · TXT — max 10 MB
+                    </span>
+                </button>
+
+                {error && (
+                    <div className="flex items-center gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
+                        <span className="material-symbols-outlined text-[18px]">error</span>
+                        {error}
+                    </div>
+                )}
+
+                <input
+                    ref={inputRef}
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    className="hidden"
+                    onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ""; }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function DocumentRow({ doc, onDelete, onReplace }) {
     const isProcessing = doc.status === "processing";
     const isFailed = doc.status === "failed";
 
@@ -156,6 +261,7 @@ function DocumentRow({ doc, onDelete }) {
             <div className="col-span-4 w-full flex justify-end gap-2">
                 <button
                     disabled={isProcessing}
+                    onClick={() => onReplace(doc)}
                     className="px-3 py-1.5 border border-outline-variant text-on-surface text-sm rounded-lg hover:bg-surface-container transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Replace
@@ -177,6 +283,8 @@ export default function DocumentsPage() {
     const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
     const [profile, setProfile] = useState(MOCK_TENANT.business_profile);
     const [saved, setSaved] = useState(false);
+    // null = closed · "new" = upload dialog · doc object = replace dialog
+    const [uploadTarget, setUploadTarget] = useState(null);
 
     const handleDelete = (id) => setDocuments((prev) => prev.filter((d) => d.id !== id));
 
@@ -185,8 +293,51 @@ export default function DocumentsPage() {
         setTimeout(() => setSaved(false), 2000);
     };
 
+    // Uploaded file lands in the list as "processing", then flips to "ready".
+    const finishProcessing = (id) => {
+        setTimeout(() => {
+            setDocuments((prev) =>
+                prev.map((d) =>
+                    d.id === id
+                        ? { ...d, status: "ready", chunk_count: Math.max(4, Math.round(d.file_size_bytes / 12000)), error_message: null }
+                        : d
+                )
+            );
+        }, 1800);
+    };
+
+    const handleUpload = (file, ext) => {
+        if (uploadTarget && uploadTarget !== "new") {
+            // Replace an existing document — bump the version.
+            const id = uploadTarget.id;
+            setDocuments((prev) =>
+                prev.map((d) =>
+                    d.id === id
+                        ? { ...d, file_name: file.name, file_type: ext, file_size_bytes: file.size, status: "processing", chunk_count: null, version: d.version + 1, created_at: new Date().toISOString() }
+                        : d
+                )
+            );
+            finishProcessing(id);
+        } else {
+            const id = `d${Date.now()}`;
+            setDocuments((prev) => [
+                { id, file_name: file.name, file_type: ext, file_size_bytes: file.size, status: "processing", chunk_count: null, document_type: "custom", created_at: new Date().toISOString(), error_message: null, version: 1 },
+                ...prev,
+            ]);
+            finishProcessing(id);
+        }
+        setUploadTarget(null);
+    };
+
     return (
         <div className="overflow-y-auto flex-1 px-gutter md:px-xl pb-gutter md:pb-xl pt-lg custom-scrollbar">
+            {uploadTarget !== null && (
+                <UploadDialog
+                    target={uploadTarget === "new" ? null : uploadTarget}
+                    onUpload={handleUpload}
+                    onClose={() => setUploadTarget(null)}
+                />
+            )}
             <div className="max-w-4xl mx-auto flex flex-col gap-lg">
                 {/* Page heading */}
                 <section className="shrink-0">
@@ -270,7 +421,10 @@ export default function DocumentsPage() {
                                 {documents.length} document{documents.length !== 1 ? "s" : ""}
                             </p>
                         </div>
-                        <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20">
+                        <button
+                            onClick={() => setUploadTarget("new")}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+                        >
                             <span className="material-symbols-outlined text-[18px]">upload_file</span>
                             Upload
                         </button>
@@ -294,7 +448,7 @@ export default function DocumentsPage() {
                                 </div>
                             ) : (
                                 documents.map((doc) => (
-                                    <DocumentRow key={doc.id} doc={doc} onDelete={handleDelete} />
+                                    <DocumentRow key={doc.id} doc={doc} onDelete={handleDelete} onReplace={setUploadTarget} />
                                 ))
                             )}
                         </div>

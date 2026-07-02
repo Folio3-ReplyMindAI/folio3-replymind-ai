@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { Reveal } from "@/components/ui/Reveal";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
+import { Reveal } from "@/src/components/ui/Reveal";
 
 interface StyledSVGEl extends SVGElement {
   __len?: number;

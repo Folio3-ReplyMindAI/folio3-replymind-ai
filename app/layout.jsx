@@ -1,29 +1,47 @@
+import { Inter, JetBrains_Mono } from "next/font/google";
+import { PageLoader } from "@/src/components/loader/PageLoader";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
 export const metadata = {
-    title: "ReplyMind — Every customer message. One inbox.",
-    description: "ReplyMind unifies WhatsApp, email, and website chat into one inbox and writes AI reply drafts you approve with a tap.",
-    authors: [{ name: "ReplyMind" }],
-    openGraph: {
-        title: "ReplyMind — Every customer message. One inbox.",
-        description: "Unified messaging with AI-drafted replies. Never miss a lead or lose a weekend to busywork again.",
-        type: "website",
-    },
-    twitter: {
-        card: "summary",
-        title: "ReplyMind — Every customer message. One inbox.",
-        description: "Unified messaging with AI-drafted replies. Never miss a lead or lose a weekend to busywork again.",
-    },
+  title: "ReplyMind — Replies that write themselves.",
+  description:
+    "ReplyMind is the AI-native inbox behind every customer conversation — it drafts a grounded reply the moment a message lands, then waits for your call.",
 };
-export default function RootLayout({ children, }) {
-    return (<html lang="en" className="h-full antialiased">
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com"/>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Climate+Crisis&display=swap"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"/>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
       </head>
-      <body className="min-h-full">{children}</body>
-    </html>);
+      <body>
+        <PageLoader />
+        {children}
+      </body>
+    </html>
+  );
 }

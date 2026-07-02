@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { Reveal } from "@/components/ui/Reveal";
-import { FileIcon, WhatsAppIcon, EmailIcon, WebsiteIcon, SendIcon, UploadIcon } from "@/components/icons";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
+import { Reveal } from "@/src/components/ui/Reveal";
+import { FileIcon, WhatsAppIcon, EmailIcon, WebsiteIcon, SendIcon, UploadIcon } from "@/src/components/icons";
 
 const steps = [
   { step: "STEP 01", title: "Upload your docs", desc: "Drop in your FAQ, menu, or price list. It becomes the source of truth for every reply." },

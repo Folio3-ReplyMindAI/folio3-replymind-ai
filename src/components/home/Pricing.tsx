@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Reveal } from "@/components/ui/Reveal";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { pricingPlans } from "@/lib/data/pricing";
-import { CheckIcon, ClockIcon } from "@/components/icons";
+import Link from "next/link";
+import { Reveal } from "@/src/components/ui/Reveal";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
+import { pricingPlans } from "@/src/lib/data/pricing";
+import { CheckIcon, ClockIcon } from "@/src/components/icons";
 
 // Side cards start shifted a full card-width toward the center card (using a
 // percentage transform, which is relative to the card's own box — so this
@@ -87,12 +88,12 @@ export function Pricing() {
               </div>
               <div className="text-[13px] text-text-muted">{plan.billingNote}</div>
 
-              <a
+              <Link
                 href={plan.href}
                 className="my-[22px] block rounded-[14px] bg-ink p-3 text-center text-sm font-semibold text-white no-underline transition-transform hover:-translate-y-px"
               >
                 {plan.cta}
-              </a>
+              </Link>
 
               <div className="flex flex-col gap-[11px]">
                 {plan.features.map((f) => (

@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const NAV_ITEMS = [
@@ -26,50 +25,70 @@ export default function Sidebar({ view, onViewChange }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    const go = (id) => {
+        if (isRouteItem(id)) {
+            router.push(getHref(id));
+        } else {
+            router.push(`/dashboard?view=${id}`);
+            onViewChange?.(id);
+        }
+    };
+
     return (
-        <aside className="flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 z-40 bg-white/40 backdrop-blur-xl border-r border-white/10 shrink-0 sidebar-glass">
-            <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto font-body-md">
+        <aside className="flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 z-40 shrink-0 bg-gradient-to-b from-[#191c85] via-primary to-[#262b9e] text-white">
+            {/* subtle top sheen */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-white/[0.04]" />
+
+            <nav className="relative flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">Workspace</p>
                 {NAV_ITEMS.map((item) => {
                     const isRoute = isRouteItem(item.id);
                     const urlView = searchParams.get("view") || "analytics";
+                    // The view prop is the source of truth when the dashboard
+                    // provides it — falling back to the URL only when absent
+                    // keeps e.g. Billing from staying lit after moving to Profile.
                     const active = isRoute
                         ? pathname === getHref(item.id)
-                        : pathname === "/dashboard" && (view === item.id || urlView === item.id);
+                        : pathname === "/dashboard" && (view ? view === item.id : urlView === item.id);
                     return (
                         <button
                             key={item.id}
-                            onClick={() => {
-                                if (isRoute) {
-                                    router.push(getHref(item.id));
-                                } else {
-                                    router.push(`/dashboard?view=${item.id}`);
-                                    onViewChange?.(item.id);
-                                }
-                            }}
-                            className={`nav-item w-full flex items-center gap-md px-md py-3 rounded-r-full transition-all duration-300 group shadow-sm ${
+                            onClick={() => go(item.id)}
+                            className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                                 active
-                                    ? "nav-item-active shadow-primary/5 border-l-[2px]"
-                                    : "text-on-surface-variant nav-item-hover border-l-[2px] border-transparent"
+                                    ? "bg-white/[0.14] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                                    : "text-white/60 hover:text-white hover:bg-white/[0.07]"
                             }`}
                         >
-                            <span className="material-symbols-outlined text-[22px]" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                            {/* active indicator */}
+                            <span
+                                className={`absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-cyan transition-all duration-200 ${
+                                    active ? "opacity-100" : "opacity-0 group-hover:opacity-40"
+                                }`}
+                            />
+                            <span className="material-symbols-outlined text-[21px]" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>
                                 {item.icon}
                             </span>
-                            <span className={`text-sm ${active ? "font-medium" : "font-normal"}`}>{item.label}</span>
+                            <span className={`text-sm ${active ? "font-semibold" : "font-normal"}`}>{item.label}</span>
                         </button>
                     );
                 })}
             </nav>
 
-            <div className="px-md pt-base mt-auto pb-6">
-                <button className="w-full bg-primary text-white rounded-xl py-3 font-medium hover:bg-primary/90 transition-all flex items-center justify-center gap-xs shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-95 group">
-                    <span className="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-90">add</span>
-                    New Message
+            {/* Bottom — help card */}
+            <div className="relative px-3 pb-5">
+                <button
+                    onClick={() => go("help")}
+                    className="w-full flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 text-left transition-all duration-200 hover:bg-white/[0.12] hover:border-white/20 group"
+                >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan/25 text-white transition-transform group-hover:scale-105">
+                        <span className="material-symbols-outlined text-[20px]">contact_support</span>
+                    </span>
+                    <span className="min-w-0">
+                        <span className="block text-sm font-medium text-white">Help Center</span>
+                        <span className="block text-[11px] text-white/45 truncate">Talk to the ReplyMind team</span>
+                    </span>
                 </button>
-                <a className="mt-md flex items-center gap-md text-on-surface-variant/70 hover:text-primary px-md py-3 rounded-xl transition-all duration-300 group" href="#">
-                    <span className="material-symbols-outlined text-[20px] group-hover:scale-110">contact_support</span>
-                    <span className="font-medium">Help Center</span>
-                </a>
             </div>
         </aside>
     );

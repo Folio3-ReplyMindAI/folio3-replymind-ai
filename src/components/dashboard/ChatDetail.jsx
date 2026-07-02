@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import ChatMessage from "@/src/components/dashboard/ChatMessage";
 import AiDraftFooter from "@/src/components/dashboard/AiDraftFooter";
 
-export default function ChatDetail({ chat, onBack }) {
+export default function ChatDetail({ chat, onBack, starred = false, onToggleStar, onArchive }) {
     const [messages, setMessages] = useState(chat.messages);
     const bottomRef = useRef(null);
 
@@ -44,12 +44,27 @@ export default function ChatDetail({ chat, onBack }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-sm">
-                    <button className="p-sm hover:bg-surface-container-high rounded-full transition-all group">
-                        <span className="material-symbols-outlined group-hover:scale-110 group-hover:text-primary">star</span>
+                    <button
+                        onClick={onToggleStar}
+                        title={starred ? "Unstar conversation" : "Star conversation"}
+                        className="p-sm hover:bg-surface-container-high rounded-full transition-all group"
+                    >
+                        <span
+                            className={`material-symbols-outlined transition-all group-hover:scale-110 ${starred ? "text-amber-400" : "group-hover:text-amber-400"}`}
+                            style={starred ? { fontVariationSettings: "'FILL' 1" } : {}}
+                        >
+                            star
+                        </span>
                     </button>
-                    <button className="p-sm hover:bg-surface-container-high rounded-full transition-all group">
-                        <span className="material-symbols-outlined group-hover:scale-110 group-hover:text-primary">archive</span>
-                    </button>
+                    {onArchive && (
+                        <button
+                            onClick={onArchive}
+                            title="Archive conversation"
+                            className="p-sm hover:bg-surface-container-high rounded-full transition-all group"
+                        >
+                            <span className="material-symbols-outlined group-hover:scale-110 group-hover:text-primary">archive</span>
+                        </button>
+                    )}
                 </div>
             </header>
 

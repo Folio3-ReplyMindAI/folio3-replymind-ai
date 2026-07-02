@@ -1,4 +1,4 @@
-import { Reveal } from "@/components/ui/Reveal";
+import { Reveal } from "@/src/components/ui/Reveal";
 
 const stats = [
   { value: "12×", label: "Cheaper than a human support agent" },

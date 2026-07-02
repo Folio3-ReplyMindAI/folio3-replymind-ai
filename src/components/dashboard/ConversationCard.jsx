@@ -1,10 +1,14 @@
-export default function ConversationCard({ chat, onSelect }) {
+export default function ConversationCard({ chat, onSelect, active = false }) {
     const unread = !chat.read;
 
     return (
         <div
             onClick={() => onSelect?.(chat)}
-            className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-surface-container transition-colors duration-150"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer border transition-colors duration-150 ${
+                active
+                    ? "bg-primary/10 border-primary/40"
+                    : "bg-white/60 border-outline-variant/20 hover:border-primary/30 hover:bg-white"
+            }`}
             data-id={chat.id}
         >
             {/* Avatar */}
@@ -22,11 +26,18 @@ export default function ConversationCard({ chat, onSelect }) {
             {/* Text */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-baseline justify-between gap-2">
-                    <span className={`text-sm truncate ${unread ? "font-medium text-on-surface" : "font-normal text-on-surface-variant"}`}>
+                    <span className={`text-sm truncate ${unread ? "font-semibold text-on-surface" : "font-normal text-on-surface-variant"}`}>
                         {chat.name}
                     </span>
-                    <span className={`text-xs shrink-0 font-normal ${unread ? "text-primary" : "text-on-surface-variant opacity-50"}`}>
-                        {chat.time}
+                    <span className="flex items-center gap-1.5 shrink-0">
+                        {chat.starred && (
+                            <span className="material-symbols-outlined text-[16px] text-amber-400" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                star
+                            </span>
+                        )}
+                        <span className={`text-xs font-normal ${unread ? "text-primary" : "text-on-surface-variant opacity-50"}`}>
+                            {chat.time}
+                        </span>
                     </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">

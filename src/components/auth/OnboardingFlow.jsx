@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import StepIndicator from "@/src/components/common/StepIndicator";
+import StepIndicator from "@/src/components/ui/StepIndicator";
 import Step1BusinessProfile from "@/src/components/auth/steps/Step1BusinessProfile";
 import Step2Documents from "@/src/components/auth/steps/Step2Documents";
 import Step3Channels from "@/src/components/auth/steps/Step3Channels";

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { scenarios } from "@/lib/data/scenarios";
-import { channelIcon, ArrowRightIcon, SendIcon, WhatsAppIcon, EmailIcon, WebsiteIcon } from "@/components/icons";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
+import { scenarios } from "@/src/lib/data/scenarios";
+import { channelIcon, ArrowRightIcon, SendIcon, WhatsAppIcon, EmailIcon, WebsiteIcon } from "@/src/components/icons";
 
 type Phase = "in" | "drafting" | "typing" | "actions";
 

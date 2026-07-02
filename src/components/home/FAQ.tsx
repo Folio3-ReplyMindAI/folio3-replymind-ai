@@ -1,5 +1,5 @@
-import { Reveal } from "@/components/ui/Reveal";
-import { faqs } from "@/lib/data/faqs";
+import { Reveal } from "@/src/components/ui/Reveal";
+import { faqs } from "@/src/lib/data/faqs";
 
 /**
  * Static Q&A grid (no accordion, no card/box) — each item reveals

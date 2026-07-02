@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
-import { personaTrack } from "@/lib/data/personas";
-import { WhatsAppIcon, ZapIcon, SendIcon } from "@/components/icons";
+import { personaTrack } from "@/src/lib/data/personas";
+import { WhatsAppIcon, ZapIcon, SendIcon } from "@/src/components/icons";
 
 // Canvas size Hero.tsx scales down to fit the viewport — kept as exported
 // constants so the two files can't drift out of sync with each other.

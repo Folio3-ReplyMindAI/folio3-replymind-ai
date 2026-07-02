@@ -1,16 +1,35 @@
 "use client";
 import { useState } from "react";
+import CheckoutPage from "@/src/components/dashboard/CheckoutPage";
 
-const MOCK_PLAN = {
-  name: "Growth Plan",
-  status: "Active",
-  price: 49,
-  renewsOn: "August 1, 2026",
-  messagesUsed: 3240,
-  messagesTotal: 5000,
-};
+const PLANS = [
+  {
+    name: "Free",
+    price: 0,
+    messages: "500 msg/mo",
+    messagesTotal: 500,
+    features: ["1 channel", "Basic AI drafts", "Community support"],
+  },
+  {
+    name: "Growth",
+    price: 49,
+    messages: "5,000 msg/mo",
+    messagesTotal: 5000,
+    features: ["3 channels", "AI drafts + auto-send", "Priority support"],
+  },
+  {
+    name: "Enterprise",
+    price: 149,
+    messages: "Unlimited",
+    messagesTotal: Infinity,
+    features: ["Unlimited channels", "Custom AI persona", "Dedicated support"],
+  },
+];
 
-const MOCK_CARD = {
+const MESSAGES_USED = 3240;
+const RENEWS_ON = "August 1, 2026";
+
+const INITIAL_CARD = {
   brand: "Visa",
   last4: "4242",
   expires: "12/27",
@@ -26,10 +45,18 @@ function FieldLabel({ children }) {
 
 export default function BillingPage() {
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [currentPlanName, setCurrentPlanName] = useState("Growth");
+  const [card, setCard] = useState(INITIAL_CARD);
+  // { mode: "upgrade" | "update-card", plan } — non-null renders the checkout page
+  const [checkout, setCheckout] = useState(null);
+  const [downgradeTarget, setDowngradeTarget] = useState(null);
 
-  const usagePct = Math.round(
-    (MOCK_PLAN.messagesUsed / MOCK_PLAN.messagesTotal) * 100
-  );
+  const currentPlan = PLANS.find((p) => p.name === currentPlanName);
+  const unlimited = !Number.isFinite(currentPlan.messagesTotal);
+
+  const usagePct = unlimited
+    ? 0
+    : Math.round((MESSAGES_USED / currentPlan.messagesTotal) * 100);
 
   const usageColor =
     usagePct >= 90
@@ -37,6 +64,33 @@ export default function BillingPage() {
       : usagePct >= 70
       ? "bg-secondary"
       : "bg-primary";
+
+  // Selecting a plan: upgrades go through checkout, downgrades ask first.
+  const handlePlanClick = (plan) => {
+    if (plan.name === currentPlanName) return;
+    if (plan.price > currentPlan.price) {
+      setCheckout({ mode: "upgrade", plan });
+    } else {
+      setDowngradeTarget(plan);
+    }
+  };
+
+  const handleCheckoutDone = (newCard) => {
+    setCard(newCard);
+    if (checkout?.mode === "upgrade") setCurrentPlanName(checkout.plan.name);
+    setCheckout(null);
+  };
+
+  if (checkout) {
+    return (
+      <CheckoutPage
+        mode={checkout.mode}
+        plan={checkout.plan}
+        onDone={handleCheckoutDone}
+        onBack={() => setCheckout(null)}
+      />
+    );
+  }
 
   return (
     <div className="overflow-y-auto flex-1 px-gutter md:px-xl pb-gutter md:pb-xl pt-lg custom-scrollbar">
@@ -60,19 +114,19 @@ export default function BillingPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <h3 className="text-base font-medium text-on-surface">
-                  {MOCK_PLAN.name}
+                  {currentPlan.name} Plan
                 </h3>
                 <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container">
-                  {MOCK_PLAN.status}
+                  Active
                 </span>
               </div>
               <p className="text-sm text-on-surface-variant">
-                Renews on {MOCK_PLAN.renewsOn}
+                Renews on {RENEWS_ON}
               </p>
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-[28px] font-semibold text-on-surface tracking-tight leading-tight">
-                ${MOCK_PLAN.price}
+                ${currentPlan.price}
               </span>
               <span className="text-sm text-on-surface-variant">/mo</span>
             </div>
@@ -83,29 +137,36 @@ export default function BillingPage() {
             <FieldLabel>Message Usage</FieldLabel>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-on-surface">
-                {MOCK_PLAN.messagesUsed.toLocaleString()} /{" "}
-                {MOCK_PLAN.messagesTotal.toLocaleString()} messages
+                {MESSAGES_USED.toLocaleString()} /{" "}
+                {unlimited ? "Unlimited" : currentPlan.messagesTotal.toLocaleString()} messages
               </span>
               <span className="text-xs text-on-surface-variant">
-                {usagePct}% used
+                {unlimited ? "No message cap" : `${usagePct}% used`}
               </span>
             </div>
             <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${usageColor}`}
-                style={{ width: `${usagePct}%` }}
+                className={`h-full rounded-full transition-all ${unlimited ? "bg-gradient-brand" : usageColor}`}
+                style={{ width: unlimited ? "100%" : `${usagePct}%` }}
               />
             </div>
           </div>
 
-          <div className="relative z-10">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20">
-              <span className="material-symbols-outlined text-[18px]">
-                upgrade
-              </span>
-              Upgrade Plan
-            </button>
-          </div>
+          {currentPlanName !== "Enterprise" && (
+            <div className="relative z-10">
+              <button
+                onClick={() =>
+                  handlePlanClick(PLANS[PLANS.findIndex((p) => p.name === currentPlanName) + 1])
+                }
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  upgrade
+                </span>
+                Upgrade Plan
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ── Plan Tiers ── */}
@@ -114,94 +175,72 @@ export default function BillingPage() {
             Available Plans
           </h3>
           <div className="grid sm:grid-cols-3 gap-3">
-            {[
-              {
-                name: "Free",
-                price: 0,
-                messages: "500 msg/mo",
-                features: ["1 channel", "Basic AI drafts", "Community support"],
-                current: false,
-              },
-              {
-                name: "Growth",
-                price: 49,
-                messages: "5,000 msg/mo",
-                features: [
-                  "3 channels",
-                  "AI drafts + auto-send",
-                  "Priority support",
-                ],
-                current: true,
-              },
-              {
-                name: "Enterprise",
-                price: 149,
-                messages: "Unlimited",
-                features: [
-                  "Unlimited channels",
-                  "Custom AI persona",
-                  "Dedicated support",
-                ],
-                current: false,
-              },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                className={`rounded-2xl border p-5 flex flex-col gap-3 transition-all ${
-                  plan.current
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-sm font-medium text-on-surface">
-                      {plan.name}
+            {PLANS.map((plan) => {
+              const isCurrent = plan.name === currentPlanName;
+              return (
+                <div
+                  key={plan.name}
+                  onClick={() => handlePlanClick(plan)}
+                  className={`rounded-2xl border p-5 flex flex-col gap-3 transition-all ${
+                    isCurrent
+                      ? "border-primary bg-primary/5 shadow-sm cursor-default"
+                      : "border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low hover:border-primary/40 cursor-pointer"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="text-sm font-medium text-on-surface">
+                        {plan.name}
+                      </p>
+                      {isCurrent && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-on-surface-variant">
+                      {plan.messages}
                     </p>
-                    {plan.current && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container">
-                        Current
-                      </span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-medium text-on-surface">
+                      {plan.price === 0 ? "Free" : `$${plan.price}`}
+                    </span>
+                    {plan.price > 0 && (
+                      <span className="text-xs text-on-surface-variant">/mo</span>
                     )}
                   </div>
-                  <p className="text-xs text-on-surface-variant">
-                    {plan.messages}
-                  </p>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-medium text-on-surface">
-                    {plan.price === 0 ? "Free" : `$${plan.price}`}
-                  </span>
-                  {plan.price > 0 && (
-                    <span className="text-xs text-on-surface-variant">/mo</span>
+                  <ul className="flex flex-col gap-1.5">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2">
+                        <span
+                          className="material-symbols-outlined text-[14px] text-primary shrink-0"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          check_circle
+                        </span>
+                        <span className="text-xs text-on-surface-variant">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {!isCurrent && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlanClick(plan);
+                      }}
+                      className={`mt-auto text-sm font-medium py-2 rounded-xl border transition-all ${
+                        plan.price > currentPlan.price
+                          ? "bg-primary text-on-primary border-transparent hover:bg-primary/90 shadow-sm shadow-primary/20"
+                          : "border-outline-variant text-on-surface-variant hover:bg-surface-container"
+                      }`}
+                    >
+                      {plan.price > currentPlan.price ? "Upgrade" : "Downgrade"}
+                    </button>
                   )}
                 </div>
-                <ul className="flex flex-col gap-1.5">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span
-                        className="material-symbols-outlined text-[14px] text-primary shrink-0"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        check_circle
-                      </span>
-                      <span className="text-xs text-on-surface-variant">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                {!plan.current && (
-                  <button
-                    className={`mt-auto text-sm font-medium py-2 rounded-xl border transition-all ${
-                      plan.price > MOCK_PLAN.price
-                        ? "bg-primary text-on-primary border-transparent hover:bg-primary/90 shadow-sm shadow-primary/20"
-                        : "border-outline-variant text-on-surface-variant hover:bg-surface-container"
-                    }`}
-                  >
-                    {plan.price > MOCK_PLAN.price ? "Upgrade" : "Downgrade"}
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -222,14 +261,17 @@ export default function BillingPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-on-surface">
-                  {MOCK_CARD.brand} ending in {MOCK_CARD.last4}
+                  {card.brand} ending in {card.last4}
                 </p>
                 <p className="text-xs text-on-surface-variant">
-                  Expires {MOCK_CARD.expires}
+                  Expires {card.expires}
                 </p>
               </div>
             </div>
-            <button className="text-sm font-medium text-primary hover:underline underline-offset-2 transition-all">
+            <button
+              onClick={() => setCheckout({ mode: "update-card", plan: null })}
+              className="text-sm font-medium text-primary hover:underline underline-offset-2 transition-all"
+            >
               Update
             </button>
           </div>
@@ -272,37 +314,120 @@ export default function BillingPage() {
         </div>
 
         {/* ── Cancel Subscription ── */}
-        <div className="border-t border-outline-variant/40 pt-lg flex flex-col gap-3">
-          <h3 className="text-base font-medium text-error">
-            Cancel Subscription
-          </h3>
-          <p className="text-sm text-on-surface-variant max-w-xl leading-relaxed">
-            Canceling will downgrade your account to the Free tier at the end of
-            your current billing cycle. You will lose access to all premium
-            features.
-          </p>
-          {!cancelConfirm ? (
-            <button
-              onClick={() => setCancelConfirm(true)}
-              className="self-start text-sm font-medium text-error border border-error/50 px-4 py-2 rounded-xl hover:bg-error-container/50 transition-all"
-            >
+        <div className="rounded-2xl border border-error/25 bg-error-container/20 p-6 flex flex-col sm:flex-row sm:items-center gap-4 text-left">
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <h3 className="text-base font-medium text-error flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">cancel</span>
               Cancel Subscription
-            </button>
-          ) : (
-            <div className="flex items-center gap-3 self-start">
-              <p className="text-sm text-on-surface-variant">Are you sure?</p>
-              <button className="text-sm font-medium text-on-error bg-error px-4 py-2 rounded-xl hover:bg-error/90 transition-all">
-                Yes, cancel
-              </button>
-              <button
-                onClick={() => setCancelConfirm(false)}
-                className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl hover:bg-surface-container transition-all"
-              >
-                Keep plan
-              </button>
-            </div>
-          )}
+            </h3>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              Canceling will downgrade your account to the Free tier at the end
+              of your current billing cycle. You will lose access to all premium
+              features.
+            </p>
+          </div>
+          <button
+            onClick={() => setCancelConfirm(true)}
+            className="shrink-0 self-start sm:self-center text-sm font-medium text-error border border-error/50 px-4 py-2 rounded-xl hover:bg-error-container/60 transition-all whitespace-nowrap"
+          >
+            Cancel Subscription
+          </button>
         </div>
+
+        {/* Downgrade confirmation dialog */}
+        {downgradeTarget && (
+          <div
+            className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
+            onClick={() => setDowngradeTarget(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl p-6 animate-rm-slidein"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-primary">
+                  <span className="material-symbols-outlined text-[22px]">south</span>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-semibold text-on-surface">
+                    Downgrade to {downgradeTarget.name}?
+                  </p>
+                  <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
+                    Are you sure? Your plan drops from{" "}
+                    <span className="font-medium text-on-surface">{currentPlan.name}</span> to{" "}
+                    <span className="font-medium text-on-surface">{downgradeTarget.name}</span>{" "}
+                    ({downgradeTarget.messages}) at the end of this billing cycle. Features
+                    outside the new plan will be disabled.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setDowngradeTarget(null)}
+                  className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
+                >
+                  Keep current plan
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentPlanName(downgradeTarget.name);
+                    setDowngradeTarget(null);
+                  }}
+                  className="text-sm font-medium text-on-primary bg-primary px-4 py-2 rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/25"
+                >
+                  Yes, downgrade
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation dialog */}
+        {cancelConfirm && (
+          <div
+            className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
+            onClick={() => setCancelConfirm(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl p-6 animate-rm-slidein"
+            >
+              <div className="flex flex-col items-center text-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-error-container text-error">
+                  <span className="material-symbols-outlined text-[24px]">warning</span>
+                </span>
+                <div className="min-w-0">
+                  <p className="text-base font-semibold text-on-surface">Cancel your subscription?</p>
+                  <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed max-w-xs mx-auto">
+                    Your plan stays active until the end of this billing cycle, then drops to Free.
+                    This can&apos;t be undone from here.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setCancelConfirm(false)}
+                  className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
+                >
+                  Keep plan
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentPlanName("Free");
+                    setCancelConfirm(false);
+                  }}
+                  className="text-sm font-medium text-on-error bg-error px-4 py-2 rounded-xl hover:bg-error/90 active:scale-95 transition-all shadow-sm shadow-error/25"
+                >
+                  Yes, cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="pb-xl" />
       </div>

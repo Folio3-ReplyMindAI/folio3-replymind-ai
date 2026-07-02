@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import Link from "next/link";
+import { useReducedMotion } from "@/src/hooks/useReducedMotion";
 
 const SPACING = 36; // matches the dot-grid spacing used elsewhere (ScatteredVsUnified)
 const TRAIL_LEN = 8;
@@ -217,12 +218,12 @@ export function CTABanner() {
         <p className="m-0 mb-7 text-base text-text-on-dark-muted">
           Free to start. No credit card. Setup in under 10 minutes.
         </p>
-        <a
-          href="#top"
+        <Link
+          href="/register"
           className="inline-flex rounded-[14px] bg-white px-7 py-[15px] text-base font-semibold text-ink no-underline shadow-[0_8px_24px_rgba(0,0,0,.25)] transition-transform hover:-translate-y-px"
         >
           Create Your Free Account
-        </a>
+        </Link>
       </div>
     </section>
   );
