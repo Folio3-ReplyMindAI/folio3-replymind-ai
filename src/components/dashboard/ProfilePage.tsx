@@ -1,23 +1,14 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSessionStore } from "@/src/store/useSessionStore";
+import { useTenantStore } from "@/src/store/useTenantStore";
 
-// Mock tenant — matches tenants table schema
-const MOCK_TENANT = {
-  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  business_name: "Artisan Brews Co.",
-  bot_persona: "professional",
-  bot_language: "en",
-  rag_confidence_threshold: 0.72,
-  auto_reply_level: "never",
-  rag_context_window: 6,
-  plan_tier: "free",
-  plan_expires_at: null,
+// Demo-only setup flags (not shared across pages, so kept local).
+const ACCOUNT_STATUS = {
   onboarding_completed: true,
   profile_completed: true,
   documents_uploaded: true,
-  business_type: "retail",
-  created_at: "2025-01-15T08:00:00Z",
 };
 
 const BUSINESS_TYPES = [
@@ -183,21 +174,22 @@ function useSaved() {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
-  return [saved, trigger];
+  return [saved, trigger] as const;
 }
 
 export default function ProfilePage() {
   const router = useRouter();
+  const logout = useSessionStore((s) => s.logout);
+  // Shared tenant data comes from the store, so a Save here is visible on
+  // every other page that reads the same store (e.g. the Documents page).
+  const tenant = useTenantStore();
   const [biz, setBiz] = useState({
-    business_name: MOCK_TENANT.business_name,
-    business_type: MOCK_TENANT.business_type,
+    business_name: tenant.businessName,
+    business_type: tenant.businessType,
   });
-  // The heading shows the last *saved* name — typing in the field only
-  // updates it once Save is clicked.
-  const [savedName, setSavedName] = useState(MOCK_TENANT.business_name);
   const [ai, setAi] = useState({
-    bot_persona: MOCK_TENANT.bot_persona,
-    bot_language: MOCK_TENANT.bot_language,
+    bot_persona: tenant.botPersona,
+    bot_language: tenant.botLanguage,
   });
   const [conf, setConf] = useState({
     enabled: true,
@@ -215,7 +207,10 @@ export default function ProfilePage() {
   const [channelSaved, triggerChannelSave] = useSaved();
 
   const handleBizSave = () => {
-    setSavedName(biz.business_name);
+    // Write the edited values into the shared store; the heading (and any
+    // other page reading the store) updates from here.
+    tenant.setBusinessName(biz.business_name);
+    tenant.setBusinessType(biz.business_type);
     triggerBizSave();
   };
 
@@ -240,9 +235,9 @@ export default function ProfilePage() {
     <div className="overflow-y-auto flex-1 px-gutter md:px-xl pb-gutter md:pb-xl pt-lg custom-scrollbar">
       <div className="max-w-2xl mx-auto flex flex-col gap-lg">
         {/* Page heading + avatar */}
-        <div className="flex items-center gap-5">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full border-2 border-primary-fixed overflow-hidden shadow-md">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="relative shrink-0">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-primary-fixed overflow-hidden shadow-md">
               <img
                 alt="Profile"
                 className="w-full h-full object-cover"
@@ -250,19 +245,19 @@ export default function ProfilePage() {
               />
             </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-medium text-on-surface leading-tight">
-              {savedName}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl sm:text-2xl font-medium text-on-surface leading-tight truncate">
+              {tenant.businessName}
             </h2>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <span
-                className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${PLAN_COLORS[MOCK_TENANT.plan_tier]}`}
+                className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${PLAN_COLORS[tenant.planTier]}`}
               >
-                {PLAN_LABELS[MOCK_TENANT.plan_tier]}
+                {PLAN_LABELS[tenant.planTier]}
               </span>
               <span className="text-xs text-on-surface-variant/60">
                 Member since{" "}
-                {new Date(MOCK_TENANT.created_at).toLocaleDateString("en-US", {
+                {new Date(tenant.createdAt).toLocaleDateString("en-US", {
                   month: "long",
                   year: "numeric",
                 })}
@@ -271,11 +266,14 @@ export default function ProfilePage() {
           </div>
           <button
             type="button"
-            onClick={() => router.push("/")}
-            className="ml-auto flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant/50 text-sm font-medium text-on-surface-variant hover:border-error hover:text-error hover:bg-error-container/40 active:scale-95 transition-all"
+            onClick={() => {
+              logout();
+              router.push("/");
+            }}
+            className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border border-outline-variant/50 text-sm font-medium text-on-surface-variant hover:border-error hover:text-error hover:bg-error-container/40 active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined text-[18px]">logout</span>
-            Log out
+            <span className="hidden sm:inline">Log out</span>
           </button>
         </div>
 
@@ -818,9 +816,9 @@ export default function ProfilePage() {
         >
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Onboarding", done: MOCK_TENANT.onboarding_completed },
-              { label: "Profile", done: MOCK_TENANT.profile_completed },
-              { label: "Documents", done: MOCK_TENANT.documents_uploaded },
+              { label: "Onboarding", done: ACCOUNT_STATUS.onboarding_completed },
+              { label: "Profile", done: ACCOUNT_STATUS.profile_completed },
+              { label: "Documents", done: ACCOUNT_STATUS.documents_uploaded },
             ].map(({ label, done }) => (
               <div
                 key={label}

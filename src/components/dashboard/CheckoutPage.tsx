@@ -131,7 +131,7 @@ export default function CheckoutPage({ mode = "upgrade", plan, onDone, onBack })
     const [name, setName] = useState("");
     const [expiry, setExpiry] = useState("");
     const [cvc, setCvc] = useState("");
-    const [touched, setTouched] = useState({});
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [flipped, setFlipped] = useState(false);
     const [phase, setPhase] = useState("form"); // form | processing | success
 
@@ -244,12 +244,20 @@ export default function CheckoutPage({ mode = "upgrade", plan, onDone, onBack })
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-xl items-start">
-                    {/* ── Left: 3D card + order summary ── */}
-                    <div className="flex flex-col gap-lg lg:sticky lg:top-6">
+                    {/* ── Left: 3D card + order summary ──
+                        Below lg this wrapper is `display:contents`, so the card and
+                        the order summary become direct children of the grid and can
+                        be reordered (card → form → summary) with `order` utilities so
+                        the card sits on top and the form directly beneath it. */}
+                    <div className="contents lg:flex lg:flex-col lg:gap-lg lg:sticky lg:top-6">
                         {/* Tilting card */}
                         {/* Card panel — generous size, height follows the real
                             card ratio (ISO ID-1 ≈ 1.586:1) */}
-                        <div style={{ perspective: "1200px" }} className="mx-auto w-full max-w-lg">
+                        {/* The card face is a fixed 24rem tall and overflows its
+                            aspect-ratio box; on desktop the summary's 38vh offset
+                            leaves room, but when stacked we must reserve that height
+                            so the form below never overlaps the card. */}
+                        <div style={{ perspective: "1200px" }} className="mx-auto w-full max-w-lg max-lg:order-1 max-lg:min-h-[25rem]">
                             <div
                                 className="relative w-full aspect-8/5"
                                 style={{
@@ -319,9 +327,11 @@ export default function CheckoutPage({ mode = "upgrade", plan, onDone, onBack })
                             </div>
                         </div>
 
-                        {/* Order summary (upgrade only) */}
+                        {/* Order summary (upgrade only). No hover reaction — it stays
+                            exactly where it is. On lg it's nudged down 38vh to line up
+                            with the form; below lg it drops the offset and stacks last. */}
                         {mode !== "update-card" && plan && (
-                            <div className="glass-card !rounded-2xl hover:!translate-y-0 hover:shadow-none! p-5 flex flex-col gap-3 translate-y-[38vh]">
+                            <div className="glass-card !rounded-2xl p-5 flex flex-col gap-3 lg:translate-y-[38vh] hover:[transform:none]! hover:shadow-none! max-lg:order-3">
                                 <p className="text-[11px] font-medium text-on-surface-variant uppercase tracking-[0.06em]">Order Summary</p>
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-on-surface">{plan.name} plan · {plan.messages}</span>
@@ -340,8 +350,8 @@ export default function CheckoutPage({ mode = "upgrade", plan, onDone, onBack })
                         )}
                     </div>
 
-                    {/* ── Right: form ── */}
-                    <div className="glass-card !rounded-3xl hover:!translate-y-0 p-6 md:p-8 relative overflow-hidden">
+                    {/* ── Right: form ── (sits directly under the card on small screens) */}
+                    <div className="glass-card !rounded-3xl hover:!translate-y-0 p-6 md:p-8 relative overflow-hidden max-lg:order-2">
                         {phase === "form" && (
                             <div className="flex flex-col gap-5">
                                 <div>

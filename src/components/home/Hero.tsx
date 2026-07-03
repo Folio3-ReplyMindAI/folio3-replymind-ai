@@ -155,6 +155,21 @@ export function Hero() {
       const h = header!;
       const inn = inner!;
 
+      // Below lg (<1024px, phones + tablets like iPad): the 1528px journey block
+      // can't scale down far enough without shrinking the headline to nothing, so
+      // the decorative graphic is hidden (max-lg:hidden) and the headline/CTA flow
+      // at natural full width — the headline grows to fill the freed-up space.
+      if (window.innerWidth < 1024) {
+        inn.style.transform = "none";
+        inn.style.marginLeft = "0px";
+        inn.style.width = "100%";
+        h.style.minHeight = "";
+        h.style.paddingTop = "";
+        h.style.paddingBottom = "";
+        return;
+      }
+      inn.style.width = JOURNEY_WIDTH + "px";
+
       const nav = document.querySelector<HTMLElement>("nav");
       const navH = nav ? nav.offsetHeight : 116;
       const topPad = navH + 10;
@@ -212,10 +227,10 @@ export function Hero() {
     <header
       id="top"
       ref={headerRef}
-      className="relative flex min-h-screen flex-col justify-start overflow-visible bg-bg px-6"
+      className="relative flex min-h-screen flex-col justify-start overflow-visible bg-bg px-6 max-lg:pt-28"
     >
       <div ref={innerRef} style={{ width: JOURNEY_WIDTH, maxWidth: "none", margin: 0, transformOrigin: "top left" }}>
-        <div ref={journeyRef}>
+        <div ref={journeyRef} className="max-lg:hidden">
           <JourneyGraphic lineRef={lineRef} />
         </div>
 

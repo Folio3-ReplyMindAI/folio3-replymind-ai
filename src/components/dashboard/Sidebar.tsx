@@ -20,7 +20,7 @@ function getHref(id) {
     return `/${id}`;
 }
 
-export default function Sidebar({ view, onViewChange }) {
+export default function Sidebar({ view, onViewChange = (v: string) => {}, mobileOpen = false, onClose = () => {} }) {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -32,12 +32,36 @@ export default function Sidebar({ view, onViewChange }) {
             router.push(`/dashboard?view=${id}`);
             onViewChange?.(id);
         }
+        // On mobile the sidebar is an overlay — close it after navigating.
+        onClose?.();
     };
 
     return (
-        <aside className="flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 z-40 shrink-0 bg-gradient-to-b from-[#191c85] via-primary to-[#262b9e] text-white">
+        <>
+            {/* Backdrop — only on mobile, only while the drawer is open */}
+            <div
+                onClick={onClose}
+                className={`fixed inset-0 top-16 z-40 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
+                    mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
+                }`}
+            />
+
+            <aside
+                className={`flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 max-w-[85vw] z-40 shrink-0 bg-gradient-to-b from-[#191c85] via-primary to-[#262b9e] text-white transition-transform duration-300 ease-out lg:translate-x-0 ${
+                    mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+                }`}
+            >
             {/* subtle top sheen */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-white/[0.04]" />
+
+            {/* Mobile-only close button */}
+            <button
+                onClick={onClose}
+                aria-label="Close menu"
+                className="lg:hidden absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
+            >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
 
             <nav className="relative flex-1 px-3 py-5 space-y-1 overflow-y-auto">
                 <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">Workspace</p>
@@ -90,6 +114,7 @@ export default function Sidebar({ view, onViewChange }) {
                     </span>
                 </button>
             </div>
-        </aside>
+            </aside>
+        </>
     );
 }

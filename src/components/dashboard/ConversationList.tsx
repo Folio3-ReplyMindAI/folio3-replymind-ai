@@ -21,10 +21,13 @@ export default function ConversationList({
     const unreadCount = conversations.filter((c) => !c.read).length;
 
     const padX = compact ? "px-4" : "px-gutter md:px-xl";
+    // Full-width inbox caps its content on ultrawide so cards don't stretch
+    // edge-to-edge; the compact (two-column) list already sits in a narrow rail.
+    const cap = compact ? "" : "max-w-5xl mx-auto";
 
     return (
         <section className="w-full h-full flex flex-col overflow-hidden">
-            <header className={`${padX} ${compact ? "pt-4 pb-3 space-y-3" : "pt-gutter pb-md space-y-md"} w-full shrink-0`}>
+            <header className={`${padX} ${cap} ${compact ? "pt-4 pb-3 space-y-3" : "pt-gutter pb-md space-y-md"} w-full shrink-0`}>
                 <div className="flex items-baseline gap-3">
                     <h2 className={`${compact ? "text-lg" : "text-2xl"} font-medium text-on-surface`}>{heading}</h2>
                     {unreadCount > 0 && (
@@ -44,7 +47,7 @@ export default function ConversationList({
                     />
                 </div>
             </header>
-            <div className={`flex-1 overflow-y-auto custom-scrollbar ${padX} pb-xl space-y-xs w-full`}>
+            <div className={`flex-1 overflow-y-auto custom-scrollbar ${padX} ${cap} pb-xl space-y-xs w-full`}>
                 {filtered.length > 0 ? (
                     filtered.map((chat) => (
                         <ConversationCard

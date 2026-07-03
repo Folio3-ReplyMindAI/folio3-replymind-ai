@@ -1,17 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
-
-// ─── Mock data (schema-aligned) ───────────────────────────────────────────────
-
-const MOCK_TENANT = {
-    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    business_name: "Artisan Brews Co.",
-    business_profile: {
-        operating_hours: "Mon–Fri: 9:00 AM – 6:00 PM, Sat: 10:00 AM – 4:00 PM",
-        location: "42 Brew Street, Old Town, Lahore",
-        delivery_options: "Free local delivery on orders over $50. Standard $5 flat rate otherwise.",
-    },
-};
+import Modal from "@/src/components/ui/Modal";
+import { useTenantStore } from "@/src/store/useTenantStore";
 
 const INITIAL_DOCUMENTS = [
     {
@@ -160,16 +150,7 @@ function UploadDialog({ target, onUpload, onClose }) {
     };
 
     return (
-        <div
-            className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
-            onClick={onClose}
-        >
-            <div
-                role="dialog"
-                aria-modal="true"
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-lg rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl overflow-hidden animate-rm-slidein"
-            >
+        <Modal onClose={onClose} size="lg">
                 {/* Header */}
                 <div className="flex items-center justify-between gap-3 px-6 py-5 border-b border-outline-variant/40">
                     <div className="flex items-center gap-3 min-w-0">
@@ -235,8 +216,7 @@ function UploadDialog({ target, onUpload, onClose }) {
                     onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ""; }}
                 />
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 }
 
@@ -291,8 +271,16 @@ function DocumentRow({ doc, onDelete, onReplace }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DocumentsPage() {
+    // Business profile is shared via the tenant store — the same data the
+    // Profile page shows. Edit it here (or there) and both stay in sync.
+    const businessProfile = useTenantStore((s) => s.businessProfile);
+    const setBusinessProfile = useTenantStore((s) => s.setBusinessProfile);
     const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
-    const [profile, setProfile] = useState(MOCK_TENANT.business_profile);
+    const [profile, setProfile] = useState({
+        operating_hours: businessProfile.operatingHours,
+        location: businessProfile.location,
+        delivery_options: businessProfile.deliveryOptions,
+    });
     const [saved, setSaved] = useState(false);
     // null = closed · "new" = upload dialog · doc object = replace dialog
     const [uploadTarget, setUploadTarget] = useState(null);
@@ -300,6 +288,12 @@ export default function DocumentsPage() {
     const handleDelete = (id) => setDocuments((prev) => prev.filter((d) => d.id !== id));
 
     const handleSave = () => {
+        // Persist edits back to the shared store so other pages see them.
+        setBusinessProfile({
+            operatingHours: profile.operating_hours,
+            location: profile.location,
+            deliveryOptions: profile.delivery_options,
+        });
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
     };

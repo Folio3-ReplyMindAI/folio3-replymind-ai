@@ -40,11 +40,11 @@ export function Navbar() {
         }}
       >
         <div className="mx-auto flex h-[76px] max-w-[1180px] items-center justify-between px-6">
-          <a
-            href="#top"
-            className="bg-gradient-brand bg-clip-text font-display text-[25px] font-bold tracking-[-0.02em] text-transparent no-underline"
-          >
-            ReplyMind
+          <a href="#top" className="flex items-center gap-2 no-underline">
+            <img src="/logo-mark.svg" alt="" className="h-9 w-9" />
+            <span className="bg-gradient-brand bg-clip-text font-display text-[25px] font-bold tracking-[-0.02em] text-transparent">
+              ReplyMind
+            </span>
           </a>
 
           <div className="flex items-center gap-[30px] max-[620px]:hidden">
@@ -87,8 +87,11 @@ export function Navbar() {
       {menuOpen && (
         <div className="fixed inset-0 z-[200] flex flex-col bg-white/85 p-6 backdrop-blur-[20px] backdrop-saturate-[1.4]">
           <div className="flex h-[52px] items-center justify-between">
-            <span className="bg-gradient-brand bg-clip-text font-display text-[22px] font-bold text-transparent">
-              ReplyMind
+            <span className="flex items-center gap-2">
+              <img src="/logo-mark.svg" alt="" className="h-8 w-8" />
+              <span className="bg-gradient-brand bg-clip-text font-display text-[22px] font-bold text-transparent">
+                ReplyMind
+              </span>
             </span>
             <button
               aria-label="Close menu"

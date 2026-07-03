@@ -17,9 +17,10 @@ import ChatDetail from "@/src/components/dashboard/ChatDetail";
  * two-column layout — chat names stay visible on the left, the open chat on
  * the right — and the back button returns to the full-width list.
  */
-export default function ConversationsView({ view, heading, conversations, emptyIcon, banner }) {
+export default function ConversationsView({ view, heading, conversations, emptyIcon = null, banner = null }) {
     const [chats, setChats] = useState(conversations);
     const [selectedId, setSelectedId] = useState(null);
+    const [menuOpen, setMenuOpen] = useState(false);
     const router = useRouter();
 
     const selectedChat = chats.find((c) => c.id === selectedId) || null;
@@ -40,16 +41,17 @@ export default function ConversationsView({ view, heading, conversations, emptyI
 
     return (
         <div className="flex h-screen w-full bg-surface">
-            <Header onProfileClick={() => router.push("/dashboard?view=profile")} />
+            <Header onProfileClick={() => router.push("/dashboard?view=profile")} onMenuClick={() => setMenuOpen(true)} />
 
-            <Sidebar view={view} />
+            <Sidebar view={view} mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
-            {/* pt-16 offsets the fixed header height */}
-            <main className="flex-1 ml-64 pt-16 h-screen overflow-hidden relative flex flex-col min-w-0">
+            {/* pt-16 offsets the fixed header height; ml only from lg where the sidebar is docked */}
+            <main className="flex-1 lg:ml-64 pt-16 h-screen overflow-hidden relative flex flex-col min-w-0">
                 {selectedChat ? (
                     <div className="flex-1 flex min-h-0 min-w-0">
-                        {/* Left column — the chat list stays visible */}
-                        <div className="w-80 xl:w-96 shrink-0 border-r border-outline-variant/30 bg-surface flex flex-col min-h-0">
+                        {/* Left column — the chat list. Hidden on mobile once a chat is open
+                            (the open chat takes the full width; Back returns to the list). */}
+                        <div className="hidden md:flex w-72 xl:w-96 shrink-0 border-r border-outline-variant/30 bg-surface flex-col min-h-0">
                             <ConversationList
                                 compact
                                 conversations={chats}

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import CheckoutPage from "@/src/components/dashboard/CheckoutPage";
+import Modal from "@/src/components/ui/Modal";
 
 const PLANS = [
   {
@@ -336,16 +337,7 @@ export default function BillingPage() {
 
         {/* Downgrade confirmation dialog */}
         {downgradeTarget && (
-          <div
-            className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
-            onClick={() => setDowngradeTarget(null)}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl overflow-hidden animate-rm-slidein"
-            >
+          <Modal onClose={() => setDowngradeTarget(null)} size="md">
               <div className="flex items-start gap-4 p-6">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary-container text-primary">
                   <span className="material-symbols-outlined text-[22px]">south</span>
@@ -363,10 +355,10 @@ export default function BillingPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-2 px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/40">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/40">
                 <button
                   onClick={() => setDowngradeTarget(null)}
-                  className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
+                  className="w-full sm:w-auto text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
                 >
                   Keep current plan
                 </button>
@@ -375,27 +367,17 @@ export default function BillingPage() {
                     setCurrentPlanName(downgradeTarget.name);
                     setDowngradeTarget(null);
                   }}
-                  className="text-sm font-medium text-on-primary bg-primary px-4 py-2 rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/25"
+                  className="w-full sm:w-auto text-sm font-medium text-on-primary bg-primary px-4 py-2 rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/25"
                 >
                   Yes, downgrade
                 </button>
               </div>
-            </div>
-          </div>
+          </Modal>
         )}
 
         {/* Confirmation dialog */}
         {cancelConfirm && (
-          <div
-            className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
-            onClick={() => setCancelConfirm(false)}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-2xl overflow-hidden animate-rm-slidein"
-            >
+          <Modal onClose={() => setCancelConfirm(false)} size="md">
               <div className="flex items-start gap-4 p-6">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-error-container text-error">
                   <span className="material-symbols-outlined text-[22px]">warning</span>
@@ -411,10 +393,10 @@ export default function BillingPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-2 px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/40">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/40">
                 <button
                   onClick={() => setCancelConfirm(false)}
-                  className="text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
+                  className="w-full sm:w-auto text-sm font-medium text-on-surface-variant px-4 py-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container transition-all"
                 >
                   Keep plan
                 </button>
@@ -423,13 +405,12 @@ export default function BillingPage() {
                     setCurrentPlanName("Free");
                     setCancelConfirm(false);
                   }}
-                  className="text-sm font-medium text-on-error bg-error px-4 py-2 rounded-xl hover:bg-error/90 active:scale-95 transition-all shadow-sm shadow-error/25"
+                  className="w-full sm:w-auto text-sm font-medium text-on-error bg-error px-4 py-2 rounded-xl hover:bg-error/90 active:scale-95 transition-all shadow-sm shadow-error/25"
                 >
                   Yes, cancel
                 </button>
               </div>
-            </div>
-          </div>
+          </Modal>
         )}
 
         <div className="pb-xl" />

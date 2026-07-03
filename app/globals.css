@@ -242,9 +242,22 @@ body {
   to { transform: scaleY(1); }
 }
 
-/* Hero headline scales down before the shared max-[900px] breakpoint kicks in */
-@media (max-width: 960px) {
+/* Hero headline sizing. From lg up (≥1024px) the journey graphic shows and the
+   whole block is JS-scaled, so the base 58px is used. Below lg the graphic is
+   hidden and the headline flows on its own — it grows to fill the freed space:
+   large on tablet, stepping down on phones. */
+@media (min-width: 768px) and (max-width: 1023px) {
   [data-jhead] {
-    font-size: 54px !important;
+    font-size: 60px !important;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  [data-jhead] {
+    font-size: 48px !important;
+  }
+}
+@media (max-width: 479px) {
+  [data-jhead] {
+    font-size: 36px !important;
   }
 }

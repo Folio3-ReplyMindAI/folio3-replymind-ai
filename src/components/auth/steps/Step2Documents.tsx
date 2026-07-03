@@ -20,7 +20,7 @@ export default function Step2Documents({ onNext, onBack }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
 
-  const addFiles = (fileList) => {
+  const addFiles = (fileList: FileList) => {
     const valid = Array.from(fileList).filter((f) =>
       ["pdf", "docx", "doc", "txt"].includes(f.name.split(".").pop().toLowerCase())
     );

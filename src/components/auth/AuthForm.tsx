@@ -3,11 +3,14 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
 import Icon from "@/src/components/ui/Icon";
+import { useSessionStore } from "@/src/store/useSessionStore";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Letters and spaces only — no digits or special characters.
+const NAME_RE = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
 
 /* ── Underline input with a leading icon + trailing status slot ── */
-function AuthField({ icon, type = "text", placeholder, value, onChange, trailing, invalid, error }) {
+function AuthField({ icon, type = "text", placeholder, value, onChange, trailing, invalid, error = "" }) {
   return (
     <div>
       <div
@@ -93,15 +96,13 @@ function SubmitButton({ loading, children }) {
 
 /* ── Login ── */
 function LoginForm() {
+  const login = useSessionStore((s) => s.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [error, setError] = useState("");
-
-  const MOCK_EMAIL = "demo@replymind.com";
-  const MOCK_PASSWORD = "demo123";
 
   const emailOk = EMAIL_RE.test(email);
   const passOk = password.length > 0;
@@ -113,18 +114,13 @@ function LoginForm() {
     if (!emailOk || !passOk) return;
     setLoading(true);
     try {
-      if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
-        window.location.href = "/inbox";
-        return;
-      }
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
-      window.location.href = data.redirect || "/inbox";
+      // Frontend prototype: there is no auth backend, so a valid email + a
+      // non-empty password signs you in. The session store records who's in
+      // and sets the cookie the route guard (proxy.ts) checks, then we open
+      // the app.
+      const next = new URLSearchParams(window.location.search).get("next");
+      login(email);
+      window.location.href = next || "/inbox";
     } catch (err) {
       setError(err.message);
     } finally {
@@ -169,7 +165,7 @@ function LoginForm() {
       </div>
 
       <p className="text-xs text-text-secondary/60">
-        Demo: <span className="font-medium text-text-secondary">demo@replymind.com</span> / <span className="font-medium text-text-secondary">demo123</span>
+        Enter any valid email and password to sign in.
       </p>
     </form>
   );
@@ -177,6 +173,7 @@ function LoginForm() {
 
 /* ── Signup ── */
 function SignupForm() {
+  const login = useSessionStore((s) => s.login);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -186,12 +183,13 @@ function SignupForm() {
   const [attempted, setAttempted] = useState(false);
   const [error, setError] = useState("");
 
-  const nameOk = name.trim().length > 1;
+  const nameOk = name.trim().length > 1 && NAME_RE.test(name.trim());
   const emailOk = EMAIL_RE.test(email);
   const lenOk = password.length >= 8;
-  const numOk = /[0-9!@#$%^&*]/.test(password);
+  const numOk = /[0-9]/.test(password);
+  const specialOk = /[^A-Za-z0-9\s]/.test(password);
   const caseOk = /[a-z]/.test(password) && /[A-Z]/.test(password);
-  const passOk = lenOk && numOk && caseOk;
+  const passOk = lenOk && numOk && specialOk && caseOk;
   const matchOk = confirm.length > 0 && password === confirm;
 
   const handleSubmit = (e) => {
@@ -201,6 +199,7 @@ function SignupForm() {
     if (!nameOk || !emailOk || !passOk || !matchOk) return;
     setLoading(true);
     setTimeout(() => {
+      login(email);
       window.location.href = "/onboarding";
     }, 600);
   };
@@ -212,9 +211,9 @@ function SignupForm() {
         icon="person"
         placeholder="Full name"
         value={name}
-        onChange={setName}
+        onChange={(v: string) => setName(v.replace(/[^A-Za-z\s]/g, ""))}
         invalid={attempted && !nameOk}
-        error="Please enter your full name"
+        error={!name.trim() ? "Please enter your full name" : "Name can only contain letters and spaces"}
         trailing={<ValidTick ok={nameOk} />}
       />
       <AuthField
@@ -242,7 +241,8 @@ function SignupForm() {
       />
       <ul className="space-y-1 pl-1 text-xs">
         <Rule ok={lenOk}>At least 8 characters</Rule>
-        <Rule ok={numOk}>At least one number (0-9) or a symbol</Rule>
+        <Rule ok={numOk}>At least one number (0-9)</Rule>
+        <Rule ok={specialOk}>At least one special character (!@#$…)</Rule>
         <Rule ok={caseOk}>Lowercase (a-z) and uppercase (A-Z)</Rule>
       </ul>
       <AuthField
@@ -294,9 +294,7 @@ export default function AuthForm({ initialMode = "login" }) {
       {/* Heading */}
       <div className="mb-7">
         <div className="mb-4 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-brand text-white">
-            <Icon name="psychology" filled className="text-[20px]" />
-          </span>
+          <img src="/logo-mark.svg" alt="ReplyMind" className="h-9 w-9" />
           <span className="text-base font-bold tracking-tight text-text-primary font-display">ReplyMind</span>
         </div>
         <h1 className="text-[40px] font-bold leading-none tracking-tight text-text-primary font-display">

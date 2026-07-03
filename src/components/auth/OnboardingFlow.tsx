@@ -40,12 +40,7 @@ export default function OnboardingFlow() {
       {/* Header */}
       <header className="relative z-10 w-full flex justify-between items-center px-8 py-5 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-primary text-[24px]"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            psychology
-          </span>
+          <img src="/logo-mark.svg" alt="ReplyMind" className="h-8 w-8" />
           <span className="text-[18px] font-medium text-on-surface tracking-tight">ReplyMind</span>
         </div>
         <button className="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
