@@ -438,8 +438,8 @@ export default function CheckoutPage({ mode = "upgrade", plan, onDone, onBack })
                                             placeholder="123"
                                             value={cvc}
                                             onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                                            onFocus={() => setFlipped(true)}
-                                            onBlur={() => { setFlipped(false); setTouched((t) => ({ ...t, cvc: true })); }}
+                                            onFocus={() => setFlipped(false)}
+                                            onBlur={() => setTouched((t) => ({ ...t, cvc: true }))}
                                         />
                                         <FieldError msg={touched.cvc ? errors.cvc : ""} />
                                     </div>

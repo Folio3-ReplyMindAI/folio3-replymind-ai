@@ -13,7 +13,7 @@ const PLANS = [
   },
   {
     name: "Growth",
-    price: 49,
+    price: 19,
     messages: "5,000 msg/mo",
     messagesTotal: 5000,
     features: ["3 channels", "AI drafts + auto-send", "Priority support"],
@@ -285,29 +285,23 @@ export default function BillingPage() {
           </h3>
           <div className="rounded-xl border border-outline-variant/40 overflow-hidden">
             <div className="hidden sm:grid grid-cols-12 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant/30 text-[11px] font-medium text-on-surface-variant uppercase tracking-[0.06em]">
-              <div className="col-span-4">Date</div>
+              <div className="col-span-5">Date</div>
               <div className="col-span-4">Description</div>
-              <div className="col-span-2">Amount</div>
-              <div className="col-span-2 text-right">Receipt</div>
+              <div className="col-span-3 text-right">Amount</div>
             </div>
             <div className="divide-y divide-outline-variant/20">
               {[
-                { date: "Jul 1, 2026", desc: "Growth Plan — Monthly", amount: "$49.00" },
-                { date: "Jun 1, 2026", desc: "Growth Plan — Monthly", amount: "$49.00" },
-                { date: "May 1, 2026", desc: "Growth Plan — Monthly", amount: "$49.00" },
+                { date: "Jul 1, 2026", desc: "Growth Plan — Monthly", amount: "$19.00" },
+                { date: "Jun 1, 2026", desc: "Growth Plan — Monthly", amount: "$19.00" },
+                { date: "May 1, 2026", desc: "Growth Plan — Monthly", amount: "$19.00" },
               ].map((row, i) => (
                 <div
                   key={i}
                   className="grid grid-cols-12 px-4 py-3.5 text-sm items-center hover:bg-surface-container-low transition-colors"
                 >
-                  <div className="col-span-4 text-on-surface-variant">{row.date}</div>
+                  <div className="col-span-5 text-on-surface-variant">{row.date}</div>
                   <div className="col-span-4 text-on-surface">{row.desc}</div>
-                  <div className="col-span-2 text-on-surface font-medium">{row.amount}</div>
-                  <div className="col-span-2 flex justify-end">
-                    <button className="text-primary hover:underline underline-offset-2 text-sm">
-                      PDF
-                    </button>
-                  </div>
+                  <div className="col-span-3 text-right text-on-surface font-medium">{row.amount}</div>
                 </div>
               ))}
             </div>

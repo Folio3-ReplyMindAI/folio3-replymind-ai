@@ -143,7 +143,7 @@ export default function HelpCenterPage() {
                     <div className="min-w-0">
                         <p className="text-sm font-semibold text-on-surface">Prefer email?</p>
                         <p className="text-xs text-on-surface-variant truncate">
-                            Write to <a href="mailto:support@replymind.app" className="font-medium text-primary hover:underline">support@replymind.app</a> — we reply within a few hours.
+                            Write to <a href="mailto:replymindai806@gmail.com" className="font-medium text-primary hover:underline">replymindai806@gmail.com</a> — we reply within a few hours.
                         </p>
                     </div>
                 </div>

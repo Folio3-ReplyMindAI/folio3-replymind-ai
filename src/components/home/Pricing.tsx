@@ -11,8 +11,8 @@ import { CheckIcon, ClockIcon } from "@/src/components/icons";
 // percentage transform, which is relative to the card's own box — so this
 // holds regardless of actual rendered width) and slightly rotated/scaled
 // down, like a fanned stack; the center card just settles from a light
-// scale/fade. All three animate out to their grid slot every time this
-// section scrolls into view, not just once.
+// scale/fade. All three animate out to their grid slot the first time this
+// section scrolls into view, then stay put (the reveal does not replay).
 const HIDDEN_TRANSFORM = ["translateX(100%) rotate(-7deg) scale(.92)", "scale(.96)", "translateX(-100%) rotate(7deg) scale(.92)"];
 const REVEAL_DELAY_MS = [90, 0, 90];
 
@@ -34,7 +34,15 @@ export function Pricing() {
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) setInView(entry.isIntersecting);
+        // Reveal once: the first time the grid enters view, play the animation
+        // and stop observing so it never replays on later scrolls.
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setInView(true);
+            io.disconnect();
+            break;
+          }
+        }
       },
       { threshold: 0.3 }
     );

@@ -39,39 +39,42 @@ export function Navbar() {
             : "background .2s ease, box-shadow .2s ease, border-color .2s ease, transform .55s cubic-bezier(.22,1,.36,1), opacity .55s cubic-bezier(.22,1,.36,1)",
         }}
       >
-        <div className="mx-auto flex h-[76px] max-w-[1180px] items-center justify-between px-6">
-          <a href="#top" className="flex items-center gap-2 no-underline">
-            <img src="/logo-mark.svg" alt="" className="h-9 w-9" />
-            <span className="bg-gradient-brand bg-clip-text font-display text-[25px] font-bold tracking-[-0.02em] text-transparent">
+        <div className="flex h-[76px] w-full items-center justify-between px-6 lg:px-10">
+          <a href="#top" className="flex items-center gap-2.5 no-underline">
+            <img src="/logo-mark.svg" alt="" className="h-12 w-12" />
+            <span className="bg-gradient-brand bg-clip-text font-display text-[27px] font-bold tracking-[-0.02em] text-transparent">
               ReplyMind
             </span>
           </a>
 
-          <div className="flex items-center gap-[30px] max-[620px]:hidden">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-text-secondary no-underline"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
+          {/* Nav links + auth buttons grouped together on the far right */}
+          <div className="flex items-center gap-8 max-[620px]:hidden">
+            <div className="flex items-center gap-[30px]">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-text-secondary no-underline"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
 
-          <div className="flex items-center gap-3 max-[620px]:hidden">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-text-secondary no-underline transition-colors hover:text-text-primary"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-[14px] bg-gradient-brand px-5 py-[11px] text-sm font-semibold text-white no-underline shadow-[0_8px_24px_rgba(30,34,148,.28)] transition-transform hover:-translate-y-px"
-            >
-              Start Free
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-text-secondary no-underline transition-colors hover:text-text-primary"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-[14px] bg-gradient-brand px-5 py-[11px] text-sm font-semibold text-white no-underline shadow-[0_8px_24px_rgba(30,34,148,.28)] transition-transform hover:-translate-y-px"
+              >
+                Start Free
+              </Link>
+            </div>
           </div>
 
           <button

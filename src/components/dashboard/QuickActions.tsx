@@ -1,11 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
 
-// Both remaining quick actions land on the Documents view — that's where the
-// knowledge base and routing/workflow docs live.
+// Quick action lands on the Documents view — that's where the knowledge base lives.
 const ACTIONS = [
     { icon: "upload_file", label: "Upload Knowledge Base", desc: "Update AI with new docs", view: "documents" },
-    { icon: "automation", label: "Workflow Setup", desc: "Define routing rules", view: "documents" },
 ];
 
 export default function QuickActions({ onNavigate }) {
@@ -36,7 +34,7 @@ export default function QuickActions({ onNavigate }) {
         <div className="glass-card p-md rounded-2xl bg-primary-container/10 overflow-hidden relative group cursor-default hover:bg-primary-container/20 transition-all flex-[1.4]">
           <div className="relative z-10">
             <h4 className="text-sm font-medium text-primary mb-xs">Pro Tip</h4>
-            <p className="text-sm text-on-surface-variant leading-relaxed">Try enabling &apos;Auto-Pilot&apos; for your Website channel to reduce manual drafting by 60%.</p>
+            <p className="text-sm text-on-surface-variant leading-relaxed">Try enabling &apos;Auto-Reply&apos; for your Website channel to reduce manual drafting by 60%.</p>
           </div>
           <span className="material-symbols-outlined absolute -bottom-6 -right-6 text-primary/10 text-[100px] transition-transform group-hover:scale-110 group-hover:rotate-12" style={{ fontVariationSettings: "'FILL' 1" }}>tips_and_updates</span>
         </div>
