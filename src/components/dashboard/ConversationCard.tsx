@@ -44,11 +44,6 @@ export default function ConversationCard({ chat, onSelect, active = false }) {
                     <p className={`text-xs truncate flex-1 ${unread ? "font-medium text-on-surface" : "font-normal text-on-surface-variant"}`}>
                         {chat.preview}
                     </p>
-                    {chat.draft && (
-                        <span className="shrink-0 text-[10px] font-medium text-secondary bg-secondary-container px-1.5 py-0.5 rounded-full leading-none">
-                            AI
-                        </span>
-                    )}
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
 import Icon from "@/src/components/ui/Icon";
-import { useSessionStore } from "@/src/store/useSessionStore";
+import { signIn, signUp } from "@/src/lib/actions/auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Letters and spaces only — no digits or special characters.
@@ -96,7 +96,6 @@ function SubmitButton({ loading, children }) {
 
 /* ── Login ── */
 function LoginForm() {
-  const login = useSessionStore((s) => s.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -114,12 +113,12 @@ function LoginForm() {
     if (!emailOk || !passOk) return;
     setLoading(true);
     try {
-      // Frontend prototype: there is no auth backend, so a valid email + a
-      // non-empty password signs you in. The session store records who's in
-      // and sets the cookie the route guard (proxy.ts) checks, then we open
-      // the app.
+      const result = await signIn(email, password);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
       const next = new URLSearchParams(window.location.search).get("next");
-      login(email);
       window.location.href = next || "/inbox";
     } catch (err) {
       setError(err.message);
@@ -173,7 +172,6 @@ function LoginForm() {
 
 /* ── Signup ── */
 function SignupForm() {
-  const login = useSessionStore((s) => s.login);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -192,16 +190,24 @@ function SignupForm() {
   const passOk = lenOk && numOk && specialOk && caseOk;
   const matchOk = confirm.length > 0 && password === confirm;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setAttempted(true);
     setError("");
     if (!nameOk || !emailOk || !passOk || !matchOk) return;
     setLoading(true);
-    setTimeout(() => {
-      login(email);
+    try {
+      const result = await signUp(email, password, name.trim());
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
       window.location.href = "/onboarding";
-    }, 600);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -5,6 +5,7 @@ import Sidebar from "@/src/components/dashboard/Sidebar";
 import Header from "@/src/components/dashboard/Header";
 import ConversationList from "@/src/components/dashboard/ConversationList";
 import ChatDetail from "@/src/components/dashboard/ChatDetail";
+import { fetchConversationDetail } from "@/src/lib/api/conversations";
 
 /**
  * Shared shell for the Inbox and Rejected pages (they only differ in data,
@@ -21,14 +22,25 @@ export default function ConversationsView({ view, heading, conversations, emptyI
     const [chats, setChats] = useState(conversations);
     const [selectedId, setSelectedId] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [detailError, setDetailError] = useState("");
     const router = useRouter();
 
     const selectedChat = chats.find((c) => c.id === selectedId) || null;
 
     const handleSelect = (chat) => {
         setSelectedId(chat.id);
+        setDetailError("");
         // Opening a conversation marks it read — the bold styling drops off.
         setChats((prev) => prev.map((c) => (c.id === chat.id ? { ...c, read: true } : c)));
+
+        setDetailLoading(true);
+        fetchConversationDetail(chat.id)
+            .then((detail) => {
+                setChats((prev) => prev.map((c) => (c.id === chat.id ? { ...c, ...detail, read: true } : c)));
+            })
+            .catch((err) => setDetailError(err.message))
+            .finally(() => setDetailLoading(false));
     };
 
     const handleToggleStar = (id) =>
@@ -70,6 +82,8 @@ export default function ConversationsView({ view, heading, conversations, emptyI
                                 onToggleStar={() => handleToggleStar(selectedChat.id)}
                                 onArchive={view === "rejected" ? () => handleArchive(selectedChat.id) : undefined}
                                 onBack={() => setSelectedId(null)}
+                                loading={detailLoading}
+                                error={detailError}
                             />
                         </div>
                     </div>

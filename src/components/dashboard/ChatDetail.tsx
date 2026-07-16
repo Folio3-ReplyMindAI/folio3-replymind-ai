@@ -3,13 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import ChatMessage from "@/src/components/dashboard/ChatMessage";
 import AiDraftFooter from "@/src/components/dashboard/AiDraftFooter";
 
-export default function ChatDetail({ chat, onBack, starred = false, onToggleStar = () => {}, onArchive = () => {} }) {
+export default function ChatDetail({ chat, onBack, starred = false, onToggleStar = () => {}, onArchive = () => {}, loading = false, error = "" }) {
     const [messages, setMessages] = useState(chat.messages);
     const bottomRef = useRef(null);
 
     useEffect(() => {
         setMessages(chat.messages);
-    }, [chat.id]);
+    }, [chat.id, chat.messages]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,7 +75,13 @@ export default function ChatDetail({ chat, onBack, starred = false, onToggleStar
                         October 24, 2023
                     </span>
                 </div>
-                {messages.map((msg) => (
+                {loading && (
+                    <p className="text-center text-xs text-on-surface-variant/60">Loading messages…</p>
+                )}
+                {error && (
+                    <p className="text-center text-xs text-error">{error}</p>
+                )}
+                {!loading && messages.map((msg) => (
                     <ChatMessage key={msg.id} message={msg} />
                 ))}
                 <div ref={bottomRef} />

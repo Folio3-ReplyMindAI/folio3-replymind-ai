@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { createClient } from "@/src/lib/supabase/client";
 
 const TONES = [
   { value: "professional", label: "Professional" },
@@ -23,14 +24,52 @@ export default function Step1BusinessProfile({ onNext }) {
   const [tone, setTone] = useState("professional");
   const [lang, setLang] = useState("en");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!name.trim()) {
       setError("Business name is required.");
       return;
     }
     setError("");
-    onNext({ business_name: name, bot_persona: tone, bot_language: lang });
+    setSubmitting(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setError("You must be logged in to continue.");
+        return;
+      }
+
+      const { error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        setError("Your session expired. Please sign in again.");
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tenant`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ business_name: name, bot_persona: tone, bot_language: lang }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.detail?.[0]?.msg ?? body?.detail ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      onNext({ business_name: name, bot_persona: tone, bot_language: lang });
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -131,9 +170,10 @@ export default function Step1BusinessProfile({ onNext }) {
         </button>
         <button
           onClick={handleContinue}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+          disabled={submitting}
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continue
+          {submitting ? "Saving..." : "Continue"}
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>
       </div>

@@ -1,6 +1,7 @@
 "use client";
+import { useEffect, useState } from "react";
 import ConversationsView from "@/src/components/dashboard/ConversationsView";
-import { REJECTED_CONVERSATIONS } from "@/src/data/mockConversations";
+import { fetchRejectedConversations } from "@/src/lib/api/conversations";
 
 const BANNER = (
     <div className="px-6 py-2 bg-surface-container-low border-b border-outline-variant/30 flex items-center gap-2 text-xs text-on-surface-variant shrink-0">
@@ -12,11 +13,38 @@ const BANNER = (
 );
 
 export default function RejectedPage() {
+    const [conversations, setConversations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        fetchRejectedConversations()
+            .then(setConversations)
+            .catch((err) => setError(err.message))
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-surface text-on-surface-variant text-sm">
+                Loading conversations…
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-surface text-error text-sm">
+                {error}
+            </div>
+        );
+    }
+
     return (
         <ConversationsView
             view="rejected"
             heading="Rejected"
-            conversations={REJECTED_CONVERSATIONS}
+            conversations={conversations}
             emptyIcon="block"
             banner={BANNER}
         />

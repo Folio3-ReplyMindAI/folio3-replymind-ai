@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSessionStore } from "@/src/store/useSessionStore";
+import { signOut } from "@/src/lib/actions/auth";
 import { useTenantStore } from "@/src/store/useTenantStore";
 
 // Demo-only setup flags (not shared across pages, so kept local).
@@ -179,7 +179,6 @@ function useSaved() {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const logout = useSessionStore((s) => s.logout);
   // Shared tenant data comes from the store, so a Save here is visible on
   // every other page that reads the same store (e.g. the Documents page).
   const tenant = useTenantStore();
@@ -266,8 +265,8 @@ export default function ProfilePage() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await signOut();
               router.push("/");
             }}
             className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border border-outline-variant/50 text-sm font-medium text-on-surface-variant hover:border-error hover:text-error hover:bg-error-container/40 active:scale-95 transition-all"
