@@ -10,6 +10,7 @@ import { LiveDemo } from "@/src/components/home/LiveDemo";
 import { Pricing } from "@/src/components/home/Pricing";
 import { FAQ } from "@/src/components/home/FAQ";
 import { CTABanner } from "@/src/components/home/CTABanner";
+import { ChatbotWidget } from "@/src/components/home/ChatbotWidget";
 
 export default function HomePage() {
   return (
@@ -26,6 +27,7 @@ export default function HomePage() {
       <FAQ />
       <CTABanner />
       <Footer />
+      <ChatbotWidget />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { JourneyGraphic, JOURNEY_WIDTH } from "./hero/JourneyGraphic";
+import { HeroDemoCard } from "./hero/HeroDemoCard";
 import { useReducedMotion } from "@/src/hooks/useReducedMotion";
 import { ArrowRightIcon } from "@/src/components/icons";
 
@@ -234,37 +235,43 @@ export function Hero() {
           <JourneyGraphic lineRef={lineRef} />
         </div>
 
-        <div style={{ marginTop: 26 }}>
-          <h1
-            data-jhead
-            style={introStyle(0)}
-            className="m-0 max-w-[820px] font-display text-[58px] font-semibold leading-[1.04] tracking-[-.03em] text-text-primary"
-          >
-            Replies that
-            <br />
-            <span className="bg-gradient-brand bg-clip-text text-transparent">write themselves.</span>
-          </h1>
-          <p
-            style={introStyle(1)}
-            className="mt-[22px] max-w-[600px] text-lg leading-relaxed text-text-secondary"
-          >
-            ReplyMind is the AI-native inbox behind every customer conversation — it drafts a grounded
-            reply the moment a message lands, then waits for your call.
-          </p>
-          <div style={introStyle(2)} className="mt-7 flex flex-wrap gap-3.5">
-            <Link
-              href="/register"
-              className="inline-flex items-center rounded-[14px] bg-gradient-brand px-[26px] py-[15px] text-base font-semibold text-white no-underline shadow-[0_20px_50px_rgba(30,34,148,.28)] transition-transform hover:-translate-y-px"
+        <div style={{ marginTop: 26 }} className="flex items-center justify-between gap-10">
+          <div className="translate-x-[20px]">
+            <h1
+              data-jhead
+              style={introStyle(0)}
+              className="m-0 max-w-[680px] font-display text-[58px] font-semibold leading-[1.04] tracking-[-.03em] text-text-primary"
             >
-              Start Free
-            </Link>
-            <a
-              href="#demo"
-              className="inline-flex items-center gap-2 rounded-[14px] border border-border bg-white/60 px-[22px] py-[15px] text-base font-semibold text-text-primary no-underline transition-colors hover:border-primary hover:text-primary"
+              Replies that
+              <br />
+              <span className="bg-gradient-brand bg-clip-text text-transparent">write themselves.</span>
+            </h1>
+            <p
+              style={introStyle(1)}
+              className="mt-[22px] max-w-[560px] text-lg leading-relaxed text-text-secondary"
             >
-              See it in action
-              <ArrowRightIcon width={18} height={18} strokeWidth="1.8" />
-            </a>
+              ReplyMind is the AI-native inbox behind every customer conversation — it drafts a grounded
+              reply the moment a message lands, then waits for your call.
+            </p>
+            <div style={introStyle(2)} className="mt-7 flex flex-wrap gap-3.5">
+              <Link
+                href="/register"
+                className="inline-flex items-center rounded-[14px] bg-gradient-brand px-[26px] py-[15px] text-base font-semibold text-white no-underline shadow-[0_20px_50px_rgba(30,34,148,.28)] transition-transform hover:-translate-y-px"
+              >
+                Start Free
+              </Link>
+              <a
+                href="#demo"
+                className="inline-flex items-center gap-2 rounded-[14px] border border-border bg-white/60 px-[22px] py-[15px] text-base font-semibold text-text-primary no-underline transition-colors hover:border-primary hover:text-primary"
+              >
+                See it in action
+                <ArrowRightIcon width={18} height={18} strokeWidth="1.8" />
+              </a>
+            </div>
+          </div>
+
+          <div style={introStyle(3)} className="max-xl:hidden">
+            <HeroDemoCard />
           </div>
         </div>
       </div>

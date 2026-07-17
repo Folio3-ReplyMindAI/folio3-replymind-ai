@@ -2,7 +2,7 @@
  * Compact KPI tile: gradient icon chip, headline value, delta badge and a tiny
  * sparkline. `spark` is a list of numbers rendered as a normalised polyline.
  */
-function Sparkline({ points, stroke }) {
+function Sparkline({ points, stroke }: { points?: number[]; stroke: string }) {
   if (!points || points.length < 2) return null;
   const max = Math.max(...points);
   const min = Math.min(...points);
@@ -18,7 +18,23 @@ function Sparkline({ points, stroke }) {
   );
 }
 
-export default function StatsCard({ icon, label, value, change, trend = "up", spark, stroke = "var(--color-primary)" }) {
+export default function StatsCard({
+  icon,
+  label,
+  value,
+  change,
+  trend = "up",
+  spark,
+  stroke = "var(--color-primary)",
+}: {
+  icon: string;
+  label: string;
+  value: string | number;
+  change?: string;
+  trend?: "up" | "down";
+  spark?: number[];
+  stroke?: string;
+}) {
   const positive = trend === "up";
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-outline-variant/40 bg-gradient-to-br from-white to-primary/[0.04] p-md shadow-[0_1px_2px_rgba(30,34,148,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(30,34,148,0.28)]">
