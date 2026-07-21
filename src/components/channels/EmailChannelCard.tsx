@@ -8,7 +8,7 @@ import {
 } from "@/src/lib/api/email";
 
 export default function EmailChannelCard() {
-  const [status, setStatus] = useState<EmailConnectionStatus>({ email: null, status: "not_configured" });
+  const [status, setStatus] = useState<EmailConnectionStatus>({ status: "disconnected", connected_at: null, email: null });
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState("");
@@ -31,8 +31,7 @@ export default function EmailChannelCard() {
     setDisconnecting(true);
     setError("");
     try {
-      await disconnectEmailAccount();
-      setStatus({ email: null, status: "not_configured" });
+      setStatus(await disconnectEmailAccount());
     } catch (err: any) {
       setError(err.message ?? "Failed to disconnect email.");
     } finally {

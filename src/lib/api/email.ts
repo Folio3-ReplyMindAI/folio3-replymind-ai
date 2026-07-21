@@ -10,8 +10,9 @@ export interface EmailConnectionPayload {
 }
 
 export interface EmailConnectionStatus {
+  status: "connected" | "pending_verification" | "disconnected" | "error";
+  connected_at: string | null;
   email: string | null;
-  status: "connected" | "not_configured" | "failed";
 }
 
 export class AuthExpiredError extends Error {}
@@ -34,7 +35,7 @@ async function parseError(res: Response, fallback: string) {
 export async function fetchEmailConnectionStatus(): Promise<EmailConnectionStatus> {
   const headers = await authHeader();
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings/email/status`, { headers });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tenant/channels/email/status`, { headers });
 
   if (res.status === 401) throw new AuthExpiredError("Your session has expired. Please sign in again.");
   if (!res.ok) throw new Error(await parseError(res, "Failed to load email connection status."));
@@ -45,7 +46,7 @@ export async function fetchEmailConnectionStatus(): Promise<EmailConnectionStatu
 export async function connectEmailAccount(payload: EmailConnectionPayload): Promise<EmailConnectionStatus> {
   const headers = await authHeader();
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings/email/connect`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tenant/channels/email/connect`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(payload),
@@ -57,14 +58,16 @@ export async function connectEmailAccount(payload: EmailConnectionPayload): Prom
   return res.json();
 }
 
-export async function disconnectEmailAccount(): Promise<void> {
+export async function disconnectEmailAccount(): Promise<EmailConnectionStatus> {
   const headers = await authHeader();
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings/email/disconnect`, {
-    method: "DELETE",
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tenant/channels/email/disconnect`, {
+    method: "POST",
     headers,
   });
 
   if (res.status === 401) throw new AuthExpiredError("Your session has expired. Please sign in again.");
   if (!res.ok) throw new Error(await parseError(res, "Failed to disconnect email."));
+
+  return res.json();
 }
