@@ -2,9 +2,12 @@
 import { useState, useEffect, useRef } from "react";
 import ChatMessage from "@/src/components/dashboard/ChatMessage";
 import AiDraftFooter from "@/src/components/dashboard/AiDraftFooter";
+import { sendMessageReply } from "@/src/lib/api/messages";
 
-export default function ChatDetail({ chat, onBack, starred = false, onToggleStar = () => {}, onArchive = () => {}, loading = false, error = "" }) {
+export default function ChatDetail({ chat, onBack, starred = false, onToggleStar = () => {}, onArchive = () => {}, loading = false, error = "", onSent = () => {} }) {
     const [messages, setMessages] = useState(chat.messages);
+    const [sending, setSending] = useState(false);
+    const [sendError, setSendError] = useState("");
     const bottomRef = useRef(null);
 
     useEffect(() => {
@@ -15,13 +18,27 @@ export default function ChatDetail({ chat, onBack, starred = false, onToggleStar
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleSend = (text) => {
-        if (!text.trim()) return;
-        const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        setMessages((prev) => [
-            ...prev,
-            { id: Date.now(), from: "me", text: text.trim(), time: now },
-        ]);
+    // Actually delivers the reply through the tenant's connected email
+    // account (see message_service.py) — status distinguishes an approved
+    // AI draft from a freely-typed reply, both replying to the customer's
+    // own last message (chat.replyToMessageId).
+    const handleSend = async (text, status) => {
+        if (!text.trim() || !chat.replyToMessageId || sending) return;
+        setSending(true);
+        setSendError("");
+        try {
+            await sendMessageReply(chat.replyToMessageId, text.trim(), status);
+            const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            setMessages((prev) => [
+                ...prev,
+                { id: `local-${Date.now()}`, from: "me", text: text.trim(), time: now },
+            ]);
+            onSent();
+        } catch (err) {
+            setSendError(err.message ?? "Failed to send reply.");
+        } finally {
+            setSending(false);
+        }
     };
 
     return (
@@ -88,7 +105,13 @@ export default function ChatDetail({ chat, onBack, starred = false, onToggleStar
             </div>
 
             {/* Footer */}
-            <AiDraftFooter draft={chat.draft} onSend={handleSend} />
+            <AiDraftFooter
+                draft={chat.draft}
+                onSend={handleSend}
+                sending={sending}
+                error={sendError}
+                disabled={!chat.replyToMessageId}
+            />
         </div>
     );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export default function AiDraftFooter({ draft, onSend }) {
+export default function AiDraftFooter({ draft, onSend, sending = false, error = "", disabled = false }) {
     const [draftText, setDraftText] = useState(draft || "");
     const [dismissed, setDismissed] = useState(false);
     const [inputText, setInputText] = useState("");
@@ -9,14 +9,13 @@ export default function AiDraftFooter({ draft, onSend }) {
     const showDraft = draft && !dismissed;
 
     const sendDraft = () => {
-        if (!draftText.trim()) return;
-        onSend?.(draftText);
-        setDismissed(true);
+        if (!draftText.trim() || sending) return;
+        onSend?.(draftText, "approved_sent");
     };
 
     const sendInput = () => {
-        if (!inputText.trim()) return;
-        onSend?.(inputText);
+        if (!inputText.trim() || sending) return;
+        onSend?.(inputText, "manually_sent");
         setInputText("");
     };
 
@@ -45,46 +44,61 @@ export default function AiDraftFooter({ draft, onSend }) {
                         <textarea
                             value={draftText}
                             onChange={(e) => setDraftText(e.target.value)}
+                            disabled={sending}
                             rows={3}
-                            className="w-full bg-primary-container text-on-primary-container rounded-tl-2xl rounded-bl-2xl rounded-br-2xl p-3 text-sm leading-relaxed resize-none border border-dashed border-primary/40 hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+                            className="w-full bg-primary-container text-on-primary-container rounded-tl-2xl rounded-bl-2xl rounded-br-2xl p-3 text-sm leading-relaxed resize-none border border-dashed border-primary/40 hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text disabled:opacity-60"
                         />
 
                         <div className="flex items-center justify-between mt-1.5">
                             <button
                                 onClick={() => setDismissed(true)}
-                                className="p-1.5 rounded-full hover:bg-red-50 text-on-surface-variant/40 hover:text-red-400 transition-colors"
+                                disabled={sending}
+                                className="p-1.5 rounded-full hover:bg-red-50 text-on-surface-variant/40 hover:text-red-400 transition-colors disabled:opacity-40"
                                 title="Dismiss draft"
                             >
                                 <span className="material-symbols-outlined text-[18px]">delete</span>
                             </button>
                             <button
                                 onClick={sendDraft}
-                                className="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+                                disabled={sending || disabled}
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 disabled:opacity-50"
                             >
                                 <span className="material-symbols-outlined text-[16px]">send</span>
-                                Send
+                                {sending ? "Sending…" : "Send"}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {error && (
+                <p className="text-xs text-error mb-2 text-right">{error}</p>
+            )}
+
+            {disabled && (
+                <p className="text-xs text-on-surface-variant/60 mb-2 text-right">
+                    No customer message left to reply to in this conversation.
+                </p>
+            )}
+
             <div className="flex items-center gap-2">
                 <div className="flex-1 bg-surface-container-low rounded-full px-4 py-2.5 border border-outline-variant/30 flex items-center focus-within:ring-2 focus-within:ring-primary/40 transition-all">
                     <input
-                        className="bg-transparent border-none focus:outline-none w-full text-sm placeholder:text-on-surface-variant/50"
+                        className="bg-transparent border-none focus:outline-none w-full text-sm placeholder:text-on-surface-variant/50 disabled:opacity-60"
                         placeholder="Write a message…"
                         type="text"
                         value={inputText}
+                        disabled={sending || disabled}
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={handleInputKeyDown}
                     />
                 </div>
                 <button
                     onClick={sendInput}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-on-primary hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 shrink-0"
+                    disabled={sending || disabled}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-on-primary hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 shrink-0 disabled:opacity-50"
                 >
-                    <span className="material-symbols-outlined text-[20px]">send</span>
+                    <span className="material-symbols-outlined text-[20px]">{sending ? "sync" : "send"}</span>
                 </button>
             </div>
         </div>

@@ -120,20 +120,24 @@ export async function fetchConversationDetail(conversationId: string) {
   const data: { conversation: ConversationSummary; messages: MessageOut[] } = await res.json();
   const messages = data.messages.map(mapMessage);
 
-  // The AI draft footer only shows a draft when the latest message is still
+  // Replies are sent against the customer's own last message, not just
+  // whichever row is newest overall — once a reply goes out, the newest row
+  // is that outbound message itself, which isn't something to reply to.
+  const lastInbound = [...data.messages].reverse().find((m) => m.direction === "inbound") ?? null;
+
+  // The AI draft footer only shows a draft when that message is still
   // awaiting owner review — once it's sent/discarded there's nothing to act on.
-  const lastMessage = data.messages[data.messages.length - 1];
   const draft =
-    lastMessage &&
-    lastMessage.direction === "inbound" &&
-    ["pending", "ready"].includes(lastMessage.draft_status ?? "") &&
-    lastMessage.ai_draft
-      ? lastMessage.ai_draft
+    lastInbound &&
+    ["pending", "ready"].includes(lastInbound.draft_status ?? "") &&
+    lastInbound.ai_draft
+      ? lastInbound.ai_draft
       : null;
 
   return {
     ...mapConversation(data.conversation),
     messages,
     draft,
+    replyToMessageId: lastInbound?.id ?? null,
   };
 }

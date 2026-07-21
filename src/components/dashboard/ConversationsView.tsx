@@ -6,6 +6,7 @@ import Header from "@/src/components/dashboard/Header";
 import ConversationList from "@/src/components/dashboard/ConversationList";
 import ChatDetail from "@/src/components/dashboard/ChatDetail";
 import { fetchConversationDetail } from "@/src/lib/api/conversations";
+import { useInboxStore } from "@/src/store/useInboxStore";
 
 /**
  * Shared shell for the Inbox and Rejected pages (they only differ in data,
@@ -26,7 +27,26 @@ export default function ConversationsView({ view, heading, conversations, emptyI
     const [detailError, setDetailError] = useState("");
     const router = useRouter();
 
+    const cachedDetails = useInboxStore((s) => s.detailsById);
+    const isDetailFresh = useInboxStore((s) => s.isDetailFresh);
+    const setDetailCache = useInboxStore((s) => s.setDetail);
+
     const selectedChat = chats.find((c) => c.id === selectedId) || null;
+
+    const loadDetail = (chatId, { silent = false } = {}) => {
+        if (!silent) setDetailLoading(true);
+        return fetchConversationDetail(chatId)
+            .then((detail) => {
+                setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, ...detail, read: true } : c)));
+                setDetailCache(chatId, detail);
+            })
+            .catch((err) => {
+                if (!silent) setDetailError(err.message);
+            })
+            .finally(() => {
+                if (!silent) setDetailLoading(false);
+            });
+    };
 
     const handleSelect = (chat) => {
         setSelectedId(chat.id);
@@ -34,14 +54,21 @@ export default function ConversationsView({ view, heading, conversations, emptyI
         // Opening a conversation marks it read — the bold styling drops off.
         setChats((prev) => prev.map((c) => (c.id === chat.id ? { ...c, read: true } : c)));
 
-        setDetailLoading(true);
-        fetchConversationDetail(chat.id)
-            .then((detail) => {
-                setChats((prev) => prev.map((c) => (c.id === chat.id ? { ...c, ...detail, read: true } : c)));
-            })
-            .catch((err) => setDetailError(err.message))
-            .finally(() => setDetailLoading(false));
+        // Fresh cached detail (e.g. re-opening the same chat within a minute)
+        // renders instantly with no fetch at all.
+        if (isDetailFresh(chat.id)) {
+            const cached = cachedDetails[chat.id].data;
+            setChats((prev) => prev.map((c) => (c.id === chat.id ? { ...c, ...cached, read: true } : c)));
+            return;
+        }
+
+        loadDetail(chat.id);
     };
+
+    // After a reply actually sends, silently re-pull that one conversation's
+    // detail (bypassing the cache) so the draft clears and the new outbound
+    // message shows up — without a loading flicker on the chat already open.
+    const handleSent = (chatId) => loadDetail(chatId, { silent: true });
 
     const handleToggleStar = (id) =>
         setChats((prev) => prev.map((c) => (c.id === id ? { ...c, starred: !c.starred } : c)));
@@ -84,6 +111,7 @@ export default function ConversationsView({ view, heading, conversations, emptyI
                                 onBack={() => setSelectedId(null)}
                                 loading={detailLoading}
                                 error={detailError}
+                                onSent={() => handleSent(selectedChat.id)}
                             />
                         </div>
                     </div>
