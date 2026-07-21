@@ -8,7 +8,7 @@ const DEFAULT_FORM: EmailConnectionPayload = {
   imap_host: "imap.gmail.com",
   imap_port: 993,
   smtp_host: "smtp.gmail.com",
-  smtp_port: 587,
+  smtp_port: 465,
 };
 
 const inputCls =
