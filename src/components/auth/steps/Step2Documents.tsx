@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { uploadDocument } from "@/src/lib/api/documents";
 
 const SUGGESTIONS = [
   { icon: "restaurant_menu", label: "Menu or price list" },
@@ -18,6 +19,8 @@ function formatBytes(bytes) {
 export default function Step2Documents({ onNext, onBack }) {
   const [files, setFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
   const inputRef = useRef(null);
 
   const addFiles = (fileList: FileList) => {
@@ -31,6 +34,30 @@ export default function Step2Documents({ onNext, onBack }) {
   };
 
   const removeFile = (name) => setFiles((prev) => prev.filter((f) => f.name !== name));
+
+  // Uploads every selected file for real before advancing — same backend
+  // path the Documents (Knowledge Base) page uses, so a document picked here
+  // is immediately available to the AI, not just decoration in this step.
+  const handleContinue = async () => {
+    if (files.length === 0) {
+      onNext({});
+      return;
+    }
+    setUploading(true);
+    setError("");
+    const results = await Promise.allSettled(files.map((f) => uploadDocument(f)));
+    setUploading(false);
+
+    const failedCount = results.filter((r) => r.status === "rejected").length;
+    if (failedCount === files.length) {
+      setError("Upload failed. You can try again, or skip and add documents later from the Knowledge Base page.");
+      return;
+    }
+    if (failedCount > 0) {
+      setError(`${failedCount} file(s) failed to upload — you can re-add them later from the Knowledge Base page.`);
+    }
+    onNext({});
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -138,30 +165,38 @@ export default function Step2Documents({ onNext, onBack }) {
         </p>
       </div>
 
+      {error && (
+        <div className="flex items-start gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
+          <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+          <span className="min-w-0">{error}</span>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="flex justify-between items-center pt-4 border-t border-outline-variant/30">
         <button
           onClick={onBack}
-          className="px-5 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-all"
+          disabled={uploading}
+          className="px-5 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-all disabled:opacity-40"
         >
           Back
         </button>
         <div className="flex items-center gap-3">
           {files.length === 0 && (
             <button
-              onClick={() => onNext({ documents: [] })}
+              onClick={handleContinue}
               className="px-5 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-all"
             >
               Skip for now
             </button>
           )}
           <button
-            onClick={() => onNext({ documents: files })}
-            disabled={files.length === 0}
+            onClick={handleContinue}
+            disabled={files.length === 0 || uploading}
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Continue
-            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            {uploading ? "Uploading…" : "Continue"}
+            {!uploading && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
           </button>
         </div>
       </div>
