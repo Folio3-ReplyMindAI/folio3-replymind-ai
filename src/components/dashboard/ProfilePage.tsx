@@ -197,6 +197,7 @@ export default function ProfilePage() {
     auto_send_threshold: "safe",
   });
   const [autoReplyError, setAutoReplyError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const [channels, setChannels] = useState(MOCK_CHANNELS); // ← add this
 
@@ -265,14 +266,18 @@ export default function ProfilePage() {
           </div>
           <button
             type="button"
+            disabled={loggingOut}
             onClick={async () => {
+              setLoggingOut(true);
               await signOut();
               router.push("/");
             }}
-            className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border border-outline-variant/50 text-sm font-medium text-on-surface-variant hover:border-error hover:text-error hover:bg-error-container/40 active:scale-95 transition-all"
+            className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border border-outline-variant/50 text-sm font-medium text-on-surface-variant hover:border-error hover:text-error hover:bg-error-container/40 active:scale-95 transition-all disabled:opacity-60"
           >
-            <span className="material-symbols-outlined text-[18px]">logout</span>
-            <span className="hidden sm:inline">Log out</span>
+            <span className={`material-symbols-outlined text-[18px] ${loggingOut ? "animate-spin" : ""}`}>
+              {loggingOut ? "progress_activity" : "logout"}
+            </span>
+            <span className="hidden sm:inline">{loggingOut ? "Logging out…" : "Log out"}</span>
           </button>
         </div>
 

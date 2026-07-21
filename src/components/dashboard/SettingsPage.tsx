@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import EmailChannelCard from "@/src/components/channels/EmailChannelCard";
 
 const DRAFT_OPTIONS = [
   { value: "most", label: "Most of them" },
@@ -134,6 +135,9 @@ export default function SettingsPage() {
             </div>
           )}
         </section>
+
+        {/* Channels */}
+        <EmailChannelCard />
 
         {/* Auto-Reply */}
         <section className="glass-card p-6 flex flex-col gap-5 !rounded-2xl hover:!translate-y-0">

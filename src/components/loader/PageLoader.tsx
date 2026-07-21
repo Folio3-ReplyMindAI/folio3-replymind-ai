@@ -6,6 +6,10 @@ import { useReducedMotion } from "@/src/hooks/useReducedMotion";
 
 const SLIDE_DURATION_MS = 700;
 const POST_FILL_PAUSE_MS = 250;
+// Set once the splash has played, so it only ever runs on the app's actual
+// first load in this browser tab — navigating back to "/" afterwards (e.g.
+// via the logo/back link) shouldn't replay a multi-second splash.
+const SEEN_KEY = "replymind_splash_seen";
 // Matches useAppReady's MIN_DURATION_MS — the bar starts filling the instant
 // this mounts (not when `ready` flips) and takes exactly this long to reach
 // 100%, so it visually finishes filling right around when the page actually
@@ -47,17 +51,23 @@ export function PageLoader() {
   const reduced = useReducedMotion();
   const [filled, setFilled] = useState(false);
   const [sliding, setSliding] = useState(false);
-  const [gone, setGone] = useState(false);
+  // Skip straight past the splash if it already played once this session —
+  // sessionStorage read lazily in the initializer so it only ever runs
+  // client-side, never during SSR.
+  const [gone, setGone] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem(SEEN_KEY) === "1"
+  );
 
   // Start the fill immediately on mount.
   useEffect(() => {
+    if (gone) return;
     if (reduced) {
       setFilled(true);
       return;
     }
     const id = requestAnimationFrame(() => setFilled(true));
     return () => cancelAnimationFrame(id);
-  }, [reduced]);
+  }, [reduced, gone]);
 
   // Only slide away once the page is ready — this fires no earlier than
   // FILL_DURATION_MS after mount, by which point the bar is already full.
@@ -69,7 +79,10 @@ export function PageLoader() {
 
   useEffect(() => {
     if (!sliding) return;
-    const t = setTimeout(() => setGone(true), reduced ? 0 : SLIDE_DURATION_MS);
+    const t = setTimeout(() => {
+      sessionStorage.setItem(SEEN_KEY, "1");
+      setGone(true);
+    }, reduced ? 0 : SLIDE_DURATION_MS);
     return () => clearTimeout(t);
   }, [sliding, reduced]);
 
