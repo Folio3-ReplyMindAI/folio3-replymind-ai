@@ -1,70 +1,20 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "@/src/components/ui/Modal";
 import { useTenantStore } from "@/src/store/useTenantStore";
+import {
+    deleteDocument,
+    fetchBusinessInfo,
+    listDocuments,
+    replaceDocument,
+    updateBusinessInfo,
+    uploadDocument,
+    type DocumentOut,
+} from "@/src/lib/api/documents";
 
-const INITIAL_DOCUMENTS = [
-    {
-        id: "d1",
-        file_name: "Product FAQ.pdf",
-        file_type: "pdf",
-        file_size_bytes: 204800,
-        status: "ready",
-        chunk_count: 42,
-        document_type: "faq",
-        created_at: "2025-06-01T10:00:00Z",
-        error_message: null,
-        version: 1,
-    },
-    {
-        id: "d2",
-        file_name: "Company Handbook.docx",
-        file_type: "docx",
-        file_size_bytes: 524288,
-        status: "processing",
-        chunk_count: null,
-        document_type: "policy",
-        created_at: "2025-06-15T14:30:00Z",
-        error_message: null,
-        version: 1,
-    },
-    {
-        id: "d3",
-        file_name: "Pricing Table.pdf",
-        file_type: "pdf",
-        file_size_bytes: 102400,
-        status: "failed",
-        chunk_count: null,
-        document_type: "pricing",
-        created_at: "2025-06-20T09:15:00Z",
-        error_message: "File could not be parsed — content may be corrupted.",
-        version: 1,
-    },
-    {
-        id: "d4",
-        file_name: "Contact List.txt",
-        file_type: "txt",
-        file_size_bytes: 8192,
-        status: "ready",
-        chunk_count: 8,
-        document_type: "contacts",
-        created_at: "2025-06-25T16:00:00Z",
-        error_message: null,
-        version: 2,
-    },
-    {
-        id: "d5",
-        file_name: "Onboarding Guide.docx",
-        file_type: "docx",
-        file_size_bytes: 358400,
-        status: "ready",
-        chunk_count: 27,
-        document_type: "guide",
-        created_at: "2025-07-01T08:30:00Z",
-        error_message: null,
-        version: 1,
-    },
-];
+// How often to re-fetch the list while any document is still "processing" in
+// the background on the server (chunking + embedding runs async there).
+const PROCESSING_POLL_MS = 3000;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -116,14 +66,13 @@ function StatusBadge({ status }) {
 
 // ─── Upload dialog ────────────────────────────────────────────────────────────
 // Modal dialog used for both "Upload" (target === null) and "Replace"
-// (target === existing doc). Opens on top of the documents list — no page
-// swap. Functional: a real file picker + drag-and-drop, then the chosen file
-// lands in the document list.
+// (target === existing doc). A real file picker + drag-and-drop; the chosen
+// file is handed back to the caller, which does the actual API call.
 
-function UploadDialog({ target, onUpload, onClose }) {
+function UploadDialog({ target, onUpload, onClose, submitting, error }) {
     const inputRef = useRef(null);
     const [dragging, setDragging] = useState(false);
-    const [error, setError] = useState("");
+    const [localError, setLocalError] = useState("");
 
     const ACCEPTED = ["pdf", "docx", "txt"];
     const MAX_BYTES = 10 * 1024 * 1024;
@@ -132,15 +81,15 @@ function UploadDialog({ target, onUpload, onClose }) {
         if (!file) return;
         const ext = file.name.split(".").pop().toLowerCase();
         if (!ACCEPTED.includes(ext)) {
-            setError(`Unsupported format ".${ext}" — use PDF, DOCX or TXT.`);
+            setLocalError(`Unsupported format ".${ext}" — use PDF, DOCX or TXT.`);
             return;
         }
         if (file.size > MAX_BYTES) {
-            setError("File is larger than 10 MB.");
+            setLocalError("File is larger than 10 MB.");
             return;
         }
-        setError("");
-        onUpload(file, ext);
+        setLocalError("");
+        onUpload(file);
     };
 
     const handleDrop = (e) => {
@@ -179,32 +128,39 @@ function UploadDialog({ target, onUpload, onClose }) {
                 <div className="p-6 flex flex-col gap-4">
                 {/* Dropzone */}
                 <button
+                    disabled={submitting}
                     onClick={() => inputRef.current?.click()}
                     onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={handleDrop}
-                    className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 transition-all ${
+                    className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 transition-all disabled:opacity-60 ${
                         dragging
                             ? "border-primary bg-primary-container/30 scale-[1.01]"
                             : "border-outline-variant/70 bg-surface-container-lowest hover:border-primary/60 hover:bg-primary-container/10"
                     }`}
                 >
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-lg shadow-primary/25">
-                        <span className="material-symbols-outlined text-[24px]">upload_file</span>
+                        <span className="material-symbols-outlined text-[24px]">
+                            {submitting ? "sync" : "upload_file"}
+                        </span>
                     </span>
                     <div className="text-center">
-                        <p className="text-sm font-semibold text-on-surface">Upload from device</p>
-                        <p className="text-xs text-on-surface-variant mt-1">Click to browse, or drag &amp; drop a file here</p>
+                        <p className="text-sm font-semibold text-on-surface">
+                            {submitting ? "Uploading…" : "Upload from device"}
+                        </p>
+                        <p className="text-xs text-on-surface-variant mt-1">
+                            {submitting ? "Please wait" : "Click to browse, or drag & drop a file here"}
+                        </p>
                     </div>
                     <span className="rounded-full bg-surface-container-high px-3 py-1 text-xs text-on-surface-variant">
                         PDF · DOCX · TXT — max 10 MB
                     </span>
                 </button>
 
-                {error && (
+                {(localError || error) && (
                     <div className="flex items-start gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
                         <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
-                        <span className="min-w-0">{error}</span>
+                        <span className="min-w-0">{localError || error}</span>
                     </div>
                 )}
 
@@ -213,6 +169,7 @@ function UploadDialog({ target, onUpload, onClose }) {
                     type="file"
                     accept=".pdf,.docx,.txt"
                     className="hidden"
+                    disabled={submitting}
                     onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ""; }}
                 />
                 </div>
@@ -220,7 +177,7 @@ function UploadDialog({ target, onUpload, onClose }) {
     );
 }
 
-function DocumentRow({ doc, onDelete, onReplace }) {
+function DocumentRow({ doc, onDelete, onReplace, deleting }) {
     const isProcessing = doc.status === "processing";
     const isFailed = doc.status === "failed";
 
@@ -251,17 +208,18 @@ function DocumentRow({ doc, onDelete, onReplace }) {
             {/* Actions */}
             <div className="col-span-4 w-full flex justify-end gap-2">
                 <button
-                    disabled={isProcessing}
+                    disabled={isProcessing || deleting}
                     onClick={() => onReplace(doc)}
                     className="px-3 py-1.5 border border-outline-variant text-on-surface text-sm rounded-lg hover:bg-surface-container transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Replace
                 </button>
                 <button
-                    onClick={() => onDelete(doc.id)}
-                    className="px-3 py-1.5 text-sm text-error rounded-lg hover:bg-error-container/60 transition-colors"
+                    disabled={deleting}
+                    onClick={() => onDelete(doc)}
+                    className="px-3 py-1.5 text-sm text-error rounded-lg hover:bg-error-container/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    Delete
+                    {deleting ? "Deleting…" : "Delete"}
                 </button>
             </div>
         </div>
@@ -273,65 +231,112 @@ function DocumentRow({ doc, onDelete, onReplace }) {
 export default function DocumentsPage() {
     // Business profile is shared via the tenant store — the same data the
     // Profile page shows. Edit it here (or there) and both stay in sync.
-    const businessProfile = useTenantStore((s) => s.businessProfile);
     const setBusinessProfile = useTenantStore((s) => s.setBusinessProfile);
-    const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
-    const [profile, setProfile] = useState({
-        operating_hours: businessProfile.operatingHours,
-        location: businessProfile.location,
-        delivery_options: businessProfile.deliveryOptions,
-    });
+
+    const [documents, setDocuments] = useState<DocumentOut[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
+
+    const [profile, setProfile] = useState({ operating_hours: "", location: "", delivery_options: "" });
+    const [savingProfile, setSavingProfile] = useState(false);
     const [saved, setSaved] = useState(false);
+
     // null = closed · "new" = upload dialog · doc object = replace dialog
-    const [uploadTarget, setUploadTarget] = useState(null);
+    const [uploadTarget, setUploadTarget] = useState<DocumentOut | "new" | null>(null);
+    const [uploadSubmitting, setUploadSubmitting] = useState(false);
+    const [uploadError, setUploadError] = useState("");
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    const handleDelete = (id) => setDocuments((prev) => prev.filter((d) => d.id !== id));
-
-    const handleSave = () => {
-        // Persist edits back to the shared store so other pages see them.
-        setBusinessProfile({
-            operatingHours: profile.operating_hours,
-            location: profile.location,
-            deliveryOptions: profile.delivery_options,
-        });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-    };
-
-    // Uploaded file lands in the list as "processing", then flips to "ready".
-    const finishProcessing = (id) => {
-        setTimeout(() => {
-            setDocuments((prev) =>
-                prev.map((d) =>
-                    d.id === id
-                        ? { ...d, status: "ready", chunk_count: Math.max(4, Math.round(d.file_size_bytes / 12000)), error_message: null }
-                        : d
-                )
-            );
-        }, 1800);
-    };
-
-    const handleUpload = (file, ext) => {
-        if (uploadTarget && uploadTarget !== "new") {
-            // Replace an existing document — bump the version.
-            const id = uploadTarget.id;
-            setDocuments((prev) =>
-                prev.map((d) =>
-                    d.id === id
-                        ? { ...d, file_name: file.name, file_type: ext, file_size_bytes: file.size, status: "processing", chunk_count: null, version: d.version + 1, created_at: new Date().toISOString() }
-                        : d
-                )
-            );
-            finishProcessing(id);
-        } else {
-            const id = `d${Date.now()}`;
-            setDocuments((prev) => [
-                { id, file_name: file.name, file_type: ext, file_size_bytes: file.size, status: "processing", chunk_count: null, document_type: "custom", created_at: new Date().toISOString(), error_message: null, version: 1 },
-                ...prev,
-            ]);
-            finishProcessing(id);
+    const loadDocuments = async () => {
+        try {
+            setDocuments(await listDocuments());
+        } catch (err: any) {
+            setLoadError(err.message ?? "Failed to load documents.");
         }
-        setUploadTarget(null);
+    };
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const [docs, info] = await Promise.all([listDocuments(), fetchBusinessInfo()]);
+                setDocuments(docs);
+                setProfile({
+                    operating_hours: info.operating_hours ?? "",
+                    location: info.location ?? "",
+                    delivery_options: info.delivery_options ?? "",
+                });
+                setBusinessProfile({
+                    operatingHours: info.operating_hours ?? "",
+                    location: info.location ?? "",
+                    deliveryOptions: info.delivery_options ?? "",
+                });
+            } catch (err: any) {
+                setLoadError(err.message ?? "Failed to load your knowledge base.");
+            } finally {
+                setLoading(false);
+            }
+        })();
+        // Zustand setters are stable across renders, so omitting setBusinessProfile
+        // here doesn't risk a stale closure — only run this fetch once on mount.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // While anything is still processing on the server, keep polling for its
+    // final status (ready/failed) instead of leaving a stale spinner forever.
+    useEffect(() => {
+        if (!documents.some((d) => d.status === "processing")) return;
+        const id = setInterval(loadDocuments, PROCESSING_POLL_MS);
+        return () => clearInterval(id);
+    }, [documents]);
+
+    const handleSaveProfile = async () => {
+        setSavingProfile(true);
+        try {
+            const updated = await updateBusinessInfo(profile);
+            setBusinessProfile({
+                operatingHours: updated.operating_hours ?? "",
+                location: updated.location ?? "",
+                deliveryOptions: updated.delivery_options ?? "",
+            });
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (err: any) {
+            setLoadError(err.message ?? "Failed to save business info.");
+        } finally {
+            setSavingProfile(false);
+        }
+    };
+
+    const handleUpload = async (file: File) => {
+        setUploadSubmitting(true);
+        setUploadError("");
+        try {
+            if (uploadTarget && uploadTarget !== "new") {
+                const updated = await replaceDocument(uploadTarget.id, file);
+                setDocuments((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+            } else {
+                const created = await uploadDocument(file);
+                setDocuments((prev) => [created, ...prev]);
+            }
+            setUploadTarget(null);
+        } catch (err: any) {
+            setUploadError(err.message ?? "Upload failed. Please try again.");
+        } finally {
+            setUploadSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (doc: DocumentOut) => {
+        if (!window.confirm(`Delete "${doc.file_name}"? The AI will no longer use it to answer questions.`)) return;
+        setDeletingId(doc.id);
+        try {
+            await deleteDocument(doc.id);
+            setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+        } catch (err: any) {
+            setLoadError(err.message ?? "Failed to delete document.");
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     return (
@@ -340,7 +345,9 @@ export default function DocumentsPage() {
                 <UploadDialog
                     target={uploadTarget === "new" ? null : uploadTarget}
                     onUpload={handleUpload}
-                    onClose={() => setUploadTarget(null)}
+                    onClose={() => { if (!uploadSubmitting) { setUploadTarget(null); setUploadError(""); } }}
+                    submitting={uploadSubmitting}
+                    error={uploadError}
                 />
             )}
             <div className="max-w-4xl mx-auto flex flex-col gap-lg">
@@ -351,6 +358,13 @@ export default function DocumentsPage() {
                         Manage the documents and business info that power your AI responses.
                     </p>
                 </section>
+
+                {loadError && (
+                    <div className="flex items-start gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
+                        <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+                        <span className="min-w-0">{loadError}</span>
+                    </div>
+                )}
 
                 {/* ── Core Business Information ── */}
                 <div className="glass-card p-6 flex flex-col gap-5 !rounded-2xl hover:!translate-y-0">
@@ -368,9 +382,10 @@ export default function DocumentsPage() {
                             </label>
                             <textarea
                                 rows={2}
+                                disabled={loading}
                                 value={profile.operating_hours}
                                 onChange={(e) => setProfile({ ...profile, operating_hours: e.target.value })}
-                                className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 resize-none transition-all"
+                                className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 resize-none transition-all disabled:opacity-50"
                                 placeholder="e.g. Mon–Fri: 9 AM – 6 PM"
                             />
                         </div>
@@ -380,9 +395,10 @@ export default function DocumentsPage() {
                             </label>
                             <input
                                 type="text"
+                                disabled={loading}
                                 value={profile.location}
                                 onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                                className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 transition-all"
+                                className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 transition-all disabled:opacity-50"
                                 placeholder="e.g. 123 Main Street, Lahore"
                             />
                         </div>
@@ -392,9 +408,10 @@ export default function DocumentsPage() {
                             </label>
                             <textarea
                                 rows={2}
+                                disabled={loading}
                                 value={profile.delivery_options}
                                 onChange={(e) => setProfile({ ...profile, delivery_options: e.target.value })}
-                                className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 resize-none transition-all"
+                                className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 resize-none transition-all disabled:opacity-50"
                                 placeholder="e.g. Free delivery on orders over $50"
                             />
                         </div>
@@ -402,14 +419,17 @@ export default function DocumentsPage() {
 
                     <div className="flex justify-end">
                         <button
-                            onClick={handleSave}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+                            onClick={handleSaveProfile}
+                            disabled={loading || savingProfile}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 disabled:opacity-50"
                         >
                             {saved ? (
                                 <>
                                     <span className="material-symbols-outlined text-[16px]">check</span>
                                     Saved
                                 </>
+                            ) : savingProfile ? (
+                                "Saving…"
                             ) : (
                                 "Save Info"
                             )}
@@ -423,12 +443,13 @@ export default function DocumentsPage() {
                         <div>
                             <h3 className="text-base font-medium text-on-surface">Uploaded Documents</h3>
                             <p className="text-xs text-on-surface-variant mt-0.5">
-                                {documents.length} document{documents.length !== 1 ? "s" : ""}
+                                {loading ? "Loading…" : `${documents.length} document${documents.length !== 1 ? "s" : ""}`}
                             </p>
                         </div>
                         <button
                             onClick={() => setUploadTarget("new")}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+                            disabled={loading}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 disabled:opacity-50"
                         >
                             <span className="material-symbols-outlined text-[18px]">upload_file</span>
                             Upload
@@ -446,14 +467,25 @@ export default function DocumentsPage() {
 
                         {/* Rows */}
                         <div className="divide-y divide-outline-variant/20">
-                            {documents.length === 0 ? (
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant/40 gap-2">
+                                    <span className="material-symbols-outlined text-4xl animate-spin">sync</span>
+                                    <p className="text-sm">Loading documents…</p>
+                                </div>
+                            ) : documents.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant/40 gap-2">
                                     <span className="material-symbols-outlined text-4xl">folder_open</span>
                                     <p className="text-sm">No documents uploaded yet.</p>
                                 </div>
                             ) : (
                                 documents.map((doc) => (
-                                    <DocumentRow key={doc.id} doc={doc} onDelete={handleDelete} onReplace={setUploadTarget} />
+                                    <DocumentRow
+                                        key={doc.id}
+                                        doc={doc}
+                                        onDelete={handleDelete}
+                                        onReplace={setUploadTarget}
+                                        deleting={deletingId === doc.id}
+                                    />
                                 ))
                             )}
                         </div>
