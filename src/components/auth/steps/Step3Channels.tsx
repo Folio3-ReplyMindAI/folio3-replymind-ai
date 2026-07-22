@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import EmailConnectForm from "@/src/components/channels/EmailConnectForm";
-import { fetchEmailConnectionStatus } from "@/src/lib/api/email";
+import { fetchEmailConnectionStatus, getGmailConnectUrl } from "@/src/lib/api/email";
 
 const CHANNELS = [
   {
@@ -36,10 +35,10 @@ const CHANNELS = [
 export default function Step3Channels({ onNext, onBack }) {
   const [connected, setConnected] = useState({});
   const [loading, setLoading] = useState({});
-  const [emailFormOpen, setEmailFormOpen] = useState(false);
 
   // Email is the only channel with a real backend integration so far —
-  // WhatsApp/Website stay on the simulated connect flow below.
+  // WhatsApp/Website stay on the simulated connect flow below. Runs again
+  // on return from Google's OAuth redirect since this step remounts fresh.
   useEffect(() => {
     fetchEmailConnectionStatus()
       .then((status) => {
@@ -50,9 +49,20 @@ export default function Step3Channels({ onNext, onBack }) {
       .catch(() => {});
   }, []);
 
-  const handleConnect = (id) => {
+  const handleConnect = async (id) => {
     if (id === "email") {
-      setEmailFormOpen(true);
+      setLoading((p) => ({ ...p, email: true }));
+      try {
+        const url = await getGmailConnectUrl();
+        // Navigating to Google's OAuth consent screen requires a real
+        // browser navigation, not a fetch — the linter's purity check
+        // misreads this as a render-time mutation because handleConnect is
+        // invoked from inside .map(), but it only ever runs from onClick.
+        // eslint-disable-next-line react-hooks/immutability
+        window.location.href = url;
+      } catch {
+        setLoading((p) => ({ ...p, email: false }));
+      }
       return;
     }
     setLoading((p) => ({ ...p, [id]: true }));
@@ -60,11 +70,6 @@ export default function Step3Channels({ onNext, onBack }) {
       setLoading((p) => ({ ...p, [id]: false }));
       setConnected((p) => ({ ...p, [id]: true }));
     }, 1200);
-  };
-
-  const handleEmailConnected = () => {
-    setEmailFormOpen(false);
-    setConnected((p) => ({ ...p, email: true }));
   };
 
   const handleFinish = () => {
@@ -86,7 +91,6 @@ export default function Step3Channels({ onNext, onBack }) {
         {CHANNELS.map((ch) => {
           const isConnected = connected[ch.id];
           const isLoading = loading[ch.id];
-          const showEmailForm = ch.id === "email" && emailFormOpen && !isConnected;
           return (
             <div
               key={ch.id}
@@ -145,15 +149,6 @@ export default function Step3Channels({ onNext, onBack }) {
                   )}
                 </div>
               </div>
-
-              {showEmailForm && (
-                <div className="pt-1 border-t border-outline-variant/30">
-                  <EmailConnectForm
-                    onConnected={handleEmailConnected}
-                    onCancel={() => setEmailFormOpen(false)}
-                  />
-                </div>
-              )}
             </div>
           );
         })}

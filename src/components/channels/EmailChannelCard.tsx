@@ -1,41 +1,47 @@
 "use client";
 import { useEffect, useState } from "react";
-import EmailConnectForm from "@/src/components/channels/EmailConnectForm";
 import {
   disconnectEmailAccount,
   fetchEmailConnectionStatus,
+  getGmailConnectUrl,
   type EmailConnectionStatus,
 } from "@/src/lib/api/email";
 
 export default function EmailChannelCard() {
   const [status, setStatus] = useState<EmailConnectionStatus>({ status: "disconnected", connected_at: null, email: null });
   const [loading, setLoading] = useState(true);
-  const [disconnecting, setDisconnecting] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const loadStatus = async () => {
+  // Runs on every mount, including the hard navigation back from Google's
+  // OAuth consent screen — no special handling needed for that redirect.
+  useEffect(() => {
+    fetchEmailConnectionStatus()
+      .then(setStatus)
+      .catch((err) => setError(err.message ?? "Failed to load email connection status."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleConnect = async () => {
+    setBusy(true);
+    setError("");
     try {
-      setStatus(await fetchEmailConnectionStatus());
+      window.location.href = await getGmailConnectUrl();
     } catch (err: any) {
-      setError(err.message ?? "Failed to load email connection status.");
-    } finally {
-      setLoading(false);
+      setError(err.message ?? "Failed to start Gmail connection.");
+      setBusy(false);
     }
   };
 
-  useEffect(() => {
-    loadStatus();
-  }, []);
-
   const handleDisconnect = async () => {
-    setDisconnecting(true);
+    setBusy(true);
     setError("");
     try {
       setStatus(await disconnectEmailAccount());
     } catch (err: any) {
       setError(err.message ?? "Failed to disconnect email.");
     } finally {
-      setDisconnecting(false);
+      setBusy(false);
     }
   };
 
@@ -44,7 +50,7 @@ export default function EmailChannelCard() {
       <div>
         <h3 className="text-base font-medium text-text-primary">Email</h3>
         <p className="text-xs text-text-secondary mt-0.5">
-          Connect your own email so customer messages land in your inbox and replies go out from your real address.
+          Connect Gmail so customer messages land in your inbox and replies go out from your real address.
         </p>
       </div>
 
@@ -62,14 +68,26 @@ export default function EmailChannelCard() {
           </div>
           <button
             onClick={handleDisconnect}
-            disabled={disconnecting}
+            disabled={busy}
             className="text-sm text-error hover:underline disabled:opacity-50 shrink-0"
           >
-            {disconnecting ? "Disconnecting…" : "Disconnect"}
+            {busy ? "Disconnecting…" : "Disconnect"}
           </button>
         </div>
       ) : (
-        <EmailConnectForm onConnected={() => loadStatus()} />
+        <div className="flex flex-col gap-2">
+          {status.status === "error" && (
+            <p className="text-xs text-error">Gmail access expired or was revoked — reconnect to keep replies going out.</p>
+          )}
+          <button
+            onClick={handleConnect}
+            disabled={busy}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 w-fit"
+          >
+            <span className="material-symbols-outlined text-[18px]">mail</span>
+            {busy ? "Redirecting…" : "Connect Gmail"}
+          </button>
+        </div>
       )}
 
       {error && (
