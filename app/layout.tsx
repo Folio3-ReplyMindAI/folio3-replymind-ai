@@ -15,10 +15,18 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const DESCRIPTION =
+  "ReplyMind connects to a business's own email inbox, reads incoming customer messages, and drafts a grounded reply the moment one lands — the owner approves it, or lets it send automatically once they trust it.";
+
 export const metadata = {
   title: "ReplyMind — Replies that write themselves.",
-  description:
-    "ReplyMind connects to a business's own email inbox, reads incoming customer messages, and drafts a grounded reply the moment one lands — the owner approves it, or lets it send automatically once they trust it.",
+  description: DESCRIPTION,
+  openGraph: {
+    siteName: "ReplyMind",
+    title: "ReplyMind",
+    description: DESCRIPTION,
+    url: "https://folio3-replymind-ai.vercel.app",
+  },
 };
 
 export default function RootLayout({ children }) {
