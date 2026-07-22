@@ -250,8 +250,9 @@ export function Hero() {
               style={introStyle(1)}
               className="mt-[22px] max-w-[560px] text-lg leading-relaxed text-text-secondary"
             >
-              ReplyMind is the AI-native inbox behind every customer conversation — it drafts a grounded
-              reply the moment a message lands, then waits for your call.
+              ReplyMind connects to your business email inbox, reads incoming customer messages,
+              and drafts a grounded reply the moment one lands — you approve it, or let it send
+              automatically once you trust it.
             </p>
             <div style={introStyle(2)} className="mt-7 flex flex-wrap gap-3.5">
               <Link

@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   title: "ReplyMind — Replies that write themselves.",
   description:
-    "ReplyMind is the AI-native inbox behind every customer conversation — it drafts a grounded reply the moment a message lands, then waits for your call.",
+    "ReplyMind connects to a business's own email inbox, reads incoming customer messages, and drafts a grounded reply the moment one lands — the owner approves it, or lets it send automatically once they trust it.",
 };
 
 export default function RootLayout({ children }) {
