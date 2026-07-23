@@ -25,7 +25,7 @@ export const metadata = {
     siteName: "ReplyMind",
     title: "ReplyMind",
     description: DESCRIPTION,
-    url: "https://folio3-replymind-ai.vercel.app",
+    url: "https://replymindai.netlify.app",
   },
 };
 
