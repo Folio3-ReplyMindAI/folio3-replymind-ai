@@ -14,7 +14,7 @@ const SEEN_KEY = "replymind_splash_seen";
 // this mounts (not when `ready` flips) and takes exactly this long to reach
 // 100%, so it visually finishes filling right around when the page actually
 // becomes ready, instead of only starting to fill at that point.
-const FILL_DURATION_MS = 7000;
+const FILL_DURATION_MS = 1400;
 
 // line-height 1.22 (not 1) matters here specifically: the fill span is
 // clipped with `clip-path: inset()`, which is bounded by the span's own
