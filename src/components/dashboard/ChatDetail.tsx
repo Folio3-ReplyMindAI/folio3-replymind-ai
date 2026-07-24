@@ -4,11 +4,25 @@ import ChatMessage from "@/src/components/dashboard/ChatMessage";
 import AiDraftFooter from "@/src/components/dashboard/AiDraftFooter";
 import { sendMessageReply } from "@/src/lib/api/messages";
 
-export default function ChatDetail({ chat, onBack, starred = false, onToggleStar = () => {}, onArchive = () => {}, loading = false, error = "", onSent = () => {} }) {
+export default function ChatDetail({ chat, onBack, starred = false, onToggleStar = () => {}, onReject = null, onUnreject = null, loading = false, error = "", onSent = () => {} }) {
     const [messages, setMessages] = useState(chat.messages);
     const [sending, setSending] = useState(false);
     const [sendError, setSendError] = useState("");
+    const [actionBusy, setActionBusy] = useState(false);
     const bottomRef = useRef(null);
+
+    // Reject/unreject remove the conversation from the current view, which
+    // unmounts this component — the busy flag just guards against a double
+    // click while the request is in flight.
+    const runAction = async (fn) => {
+        if (!fn || actionBusy) return;
+        setActionBusy(true);
+        try {
+            await fn();
+        } finally {
+            setActionBusy(false);
+        }
+    };
 
     useEffect(() => {
         setMessages(chat.messages);
@@ -73,13 +87,24 @@ export default function ChatDetail({ chat, onBack, starred = false, onToggleStar
                             star
                         </span>
                     </button>
-                    {onArchive && (
+                    {onReject && (
                         <button
-                            onClick={onArchive}
-                            title="Archive conversation"
-                            className="p-sm hover:bg-surface-container-high rounded-full transition-all group"
+                            onClick={() => runAction(onReject)}
+                            disabled={actionBusy}
+                            title="Reject — move to Rejected"
+                            className="p-sm hover:bg-error-container/60 rounded-full transition-all group disabled:opacity-40"
                         >
-                            <span className="material-symbols-outlined group-hover:scale-110 group-hover:text-primary">archive</span>
+                            <span className="material-symbols-outlined group-hover:scale-110 group-hover:text-error">block</span>
+                        </button>
+                    )}
+                    {onUnreject && (
+                        <button
+                            onClick={() => runAction(onUnreject)}
+                            disabled={actionBusy}
+                            title="Move back to Inbox"
+                            className="p-sm hover:bg-surface-container-high rounded-full transition-all group disabled:opacity-40"
+                        >
+                            <span className="material-symbols-outlined group-hover:scale-110 group-hover:text-primary">move_to_inbox</span>
                         </button>
                     )}
                 </div>

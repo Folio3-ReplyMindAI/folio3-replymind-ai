@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/src/lib/actions/auth";
 import { useTenantStore } from "@/src/store/useTenantStore";
+import { fetchBusinessInfo, updateBusinessInfo } from "@/src/lib/api/documents";
 
 // Demo-only setup flags (not shared across pages, so kept local).
 const ACCOUNT_STATUS = {
@@ -148,18 +149,21 @@ function FieldLabel({ children }) {
 const inputCls =
   "w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-2.5 transition-all";
 
-function SaveButton({ saved, onClick }) {
+function SaveButton({ saved, saving = false, disabled = false, onClick }) {
   return (
     <div className="flex justify-end pt-1">
       <button
         onClick={onClick}
-        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20"
+        disabled={saving || disabled}
+        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full text-sm font-medium hover:bg-primary/90 active:scale-95 transition-all shadow-sm shadow-primary/20 disabled:opacity-50"
       >
         {saved ? (
           <>
             <span className="material-symbols-outlined text-[16px]">check</span>{" "}
             Saved
           </>
+        ) : saving ? (
+          "Saving…"
         ) : (
           "Save Changes"
         )}
@@ -199,8 +203,41 @@ export default function ProfilePage() {
   const [autoReplyError, setAutoReplyError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
 
+  // Core business info — the same business_profile blob the Documents page and
+  // onboarding write. Seeded from the shared store, then refreshed from the API
+  // so every field the backend returns (whatever onboarding collected) shows up.
+  const [coreBiz, setCoreBiz] = useState({
+    operating_hours: tenant.businessProfile.operatingHours,
+    location: tenant.businessProfile.location,
+    delivery_options: tenant.businessProfile.deliveryOptions,
+  });
+  const [coreLoading, setCoreLoading] = useState(true);
+  const [savingCore, setSavingCore] = useState(false);
+  const [coreError, setCoreError] = useState("");
+
+  useEffect(() => {
+    fetchBusinessInfo()
+      .then((info) => {
+        setCoreBiz({
+          operating_hours: info.operating_hours ?? "",
+          location: info.location ?? "",
+          delivery_options: info.delivery_options ?? "",
+        });
+        tenant.setBusinessProfile({
+          operatingHours: info.operating_hours ?? "",
+          location: info.location ?? "",
+          deliveryOptions: info.delivery_options ?? "",
+        });
+      })
+      .catch((err) => setCoreError(err.message ?? "Failed to load business info."))
+      .finally(() => setCoreLoading(false));
+    // Store setters are stable; run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [channels, setChannels] = useState(MOCK_CHANNELS); // ← add this
 
+  const [coreSaved, triggerCoreSave] = useSaved();
   const [bizSaved, triggerBizSave] = useSaved();
   const [aiSaved, triggerAiSave] = useSaved();
   const [confSaved, triggerConfSave] = useSaved();
@@ -212,6 +249,32 @@ export default function ProfilePage() {
     tenant.setBusinessName(biz.business_name);
     tenant.setBusinessType(biz.business_type);
     triggerBizSave();
+  };
+
+  const handleCoreSave = async () => {
+    setCoreError("");
+    setSavingCore(true);
+    try {
+      // Persists to the business_profile blob — the same one the Documents
+      // page edits — and mirrors it into the shared store so both pages stay
+      // in sync in-session.
+      const updated = await updateBusinessInfo(coreBiz);
+      setCoreBiz({
+        operating_hours: updated.operating_hours ?? "",
+        location: updated.location ?? "",
+        delivery_options: updated.delivery_options ?? "",
+      });
+      tenant.setBusinessProfile({
+        operatingHours: updated.operating_hours ?? "",
+        location: updated.location ?? "",
+        deliveryOptions: updated.delivery_options ?? "",
+      });
+      triggerCoreSave();
+    } catch (err) {
+      setCoreError(err.message ?? "Failed to save business info.");
+    } finally {
+      setSavingCore(false);
+    }
   };
 
   // Confidence master toggle drives auto-reply: turning it off switches
@@ -317,6 +380,55 @@ export default function ProfilePage() {
             </div>
           </div>
           <SaveButton saved={bizSaved} onClick={handleBizSave} />
+        </SectionCard>
+
+        {/* ── Core Business Information ── */}
+        <SectionCard
+          title="Core Business Information"
+          description="Static details the AI references instantly — shared with your Knowledge Base and collected during onboarding."
+        >
+          {coreError && (
+            <div className="flex items-start gap-2 rounded-xl bg-error-container px-4 py-3 text-sm text-error">
+              <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+              <span className="min-w-0">{coreError}</span>
+            </div>
+          )}
+          <div className="flex flex-col gap-4">
+            <div>
+              <FieldLabel>Operating Hours</FieldLabel>
+              <textarea
+                rows={2}
+                disabled={coreLoading}
+                className={`${inputCls} resize-none disabled:opacity-50`}
+                value={coreBiz.operating_hours}
+                onChange={(e) => setCoreBiz({ ...coreBiz, operating_hours: e.target.value })}
+                placeholder="e.g. Mon–Fri: 9 AM – 6 PM"
+              />
+            </div>
+            <div>
+              <FieldLabel>Business Location</FieldLabel>
+              <input
+                type="text"
+                disabled={coreLoading}
+                className={`${inputCls} disabled:opacity-50`}
+                value={coreBiz.location}
+                onChange={(e) => setCoreBiz({ ...coreBiz, location: e.target.value })}
+                placeholder="e.g. 123 Main Street, Lahore"
+              />
+            </div>
+            <div>
+              <FieldLabel>Delivery Options &amp; Rates</FieldLabel>
+              <textarea
+                rows={2}
+                disabled={coreLoading}
+                className={`${inputCls} resize-none disabled:opacity-50`}
+                value={coreBiz.delivery_options}
+                onChange={(e) => setCoreBiz({ ...coreBiz, delivery_options: e.target.value })}
+                placeholder="e.g. Free delivery on orders over $50"
+              />
+            </div>
+          </div>
+          <SaveButton saved={coreSaved} saving={savingCore} disabled={coreLoading} onClick={handleCoreSave} />
         </SectionCard>
 
         {/* ── AI Configuration ── */}

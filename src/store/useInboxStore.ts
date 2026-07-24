@@ -30,6 +30,7 @@ interface InboxState {
   setInbox: (data: any[]) => void;
   setRejected: (data: any[]) => void;
   setDetail: (id: string, data: any) => void;
+  invalidateList: (list: "inbox" | "rejected") => void;
   isListFresh: (list: "inbox" | "rejected") => boolean;
   isDetailFresh: (id: string) => boolean;
 }
@@ -43,6 +44,11 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   setRejected: (data) => set({ rejected: { data, fetchedAt: Date.now() } }),
   setDetail: (id, data) =>
     set((s) => ({ detailsById: { ...s.detailsById, [id]: { data, fetchedAt: Date.now() } } })),
+
+  // Drop a cached list so the next visit refetches it — used after moving a
+  // conversation between Inbox and Rejected, since the destination list's
+  // cached copy no longer reflects the move.
+  invalidateList: (list) => set({ [list]: null } as Pick<InboxState, "inbox" | "rejected">),
 
   isListFresh: (list) => {
     const cached = get()[list];

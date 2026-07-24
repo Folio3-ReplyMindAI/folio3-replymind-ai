@@ -1,5 +1,16 @@
+// Per-channel icon + colour so every card shows where the conversation came
+// from. "whatsapp" and "email" are the live channels; livechat/website map to
+// the web glyph. Falls back to a neutral chat icon for anything unmapped.
+const CHANNEL_META = {
+    whatsapp: { icon: "chat", label: "WhatsApp", color: "text-[#25D366]" },
+    email: { icon: "mail", label: "Email", color: "text-primary" },
+    livechat: { icon: "web", label: "Web widget", color: "text-secondary" },
+    website: { icon: "web", label: "Web widget", color: "text-secondary" },
+};
+
 export default function ConversationCard({ chat, onSelect, active = false }) {
     const unread = !chat.read;
+    const channel = CHANNEL_META[chat.channel] ?? { icon: "forum", label: chat.channel ?? "Chat", color: "text-on-surface-variant" };
 
     return (
         <div
@@ -41,6 +52,13 @@ export default function ConversationCard({ chat, onSelect, active = false }) {
                     </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
+                    <span
+                        className={`material-symbols-outlined text-[15px] shrink-0 ${channel.color}`}
+                        title={channel.label}
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                        {channel.icon}
+                    </span>
                     <p className={`text-xs truncate flex-1 ${unread ? "font-medium text-on-surface" : "font-normal text-on-surface-variant"}`}>
                         {chat.preview}
                     </p>

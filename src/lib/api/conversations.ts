@@ -100,6 +100,42 @@ export async function fetchRejectedConversations() {
   return getConversations("/api/conversations/rejected");
 }
 
+// Moves a conversation between Inbox and Rejected by flipping its latest
+// inbound message's is_question flag on the server (see conversation_service).
+async function postConversationAction(conversationId: string, action: "reject" | "unreject") {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) throw new Error("You must be logged in to update this conversation.");
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/conversations/${conversationId}/${action}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    }
+  );
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail?.[0]?.msg ?? body?.detail ?? `Failed to ${action} conversation.`);
+  }
+
+  return res.json();
+}
+
+// Inbox → Rejected.
+export function rejectConversation(conversationId: string) {
+  return postConversationAction(conversationId, "reject");
+}
+
+// Rejected → Inbox.
+export function unrejectConversation(conversationId: string) {
+  return postConversationAction(conversationId, "unreject");
+}
+
 export async function fetchConversationDetail(conversationId: string) {
   const supabase = createClient();
   const {

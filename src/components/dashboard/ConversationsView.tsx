@@ -5,7 +5,7 @@ import Sidebar from "@/src/components/dashboard/Sidebar";
 import Header from "@/src/components/dashboard/Header";
 import ConversationList from "@/src/components/dashboard/ConversationList";
 import ChatDetail from "@/src/components/dashboard/ChatDetail";
-import { fetchConversationDetail } from "@/src/lib/api/conversations";
+import { fetchConversationDetail, rejectConversation, unrejectConversation } from "@/src/lib/api/conversations";
 import { useInboxStore } from "@/src/store/useInboxStore";
 
 /**
@@ -30,6 +30,9 @@ export default function ConversationsView({ view, heading, conversations, emptyI
     const cachedDetails = useInboxStore((s) => s.detailsById);
     const isDetailFresh = useInboxStore((s) => s.isDetailFresh);
     const setDetailCache = useInboxStore((s) => s.setDetail);
+    const setInbox = useInboxStore((s) => s.setInbox);
+    const setRejected = useInboxStore((s) => s.setRejected);
+    const invalidateList = useInboxStore((s) => s.invalidateList);
 
     const selectedChat = chats.find((c) => c.id === selectedId) || null;
 
@@ -73,9 +76,29 @@ export default function ConversationsView({ view, heading, conversations, emptyI
     const handleToggleStar = (id) =>
         setChats((prev) => prev.map((c) => (c.id === id ? { ...c, starred: !c.starred } : c)));
 
-    const handleArchive = (id) => {
-        setChats((prev) => prev.filter((c) => c.id !== id));
-        setSelectedId(null);
+    // Reject (Inbox → Rejected) or unreject (Rejected → Inbox). Either way the
+    // conversation leaves the current list, so drop it locally, keep this
+    // view's cache in sync, and invalidate the destination list so it refetches
+    // with the moved conversation next time it's opened.
+    const moveConversation = async (id, action) => {
+        setDetailError("");
+        try {
+            if (action === "reject") await rejectConversation(id);
+            else await unrejectConversation(id);
+
+            const remaining = chats.filter((c) => c.id !== id);
+            setChats(remaining);
+            if (view === "rejected") {
+                setRejected(remaining);
+                invalidateList("inbox");
+            } else {
+                setInbox(remaining);
+                invalidateList("rejected");
+            }
+            setSelectedId(null);
+        } catch (err) {
+            setDetailError(err.message ?? `Failed to ${action} conversation.`);
+        }
     };
 
     return (
@@ -107,7 +130,8 @@ export default function ConversationsView({ view, heading, conversations, emptyI
                                 chat={selectedChat}
                                 starred={!!selectedChat.starred}
                                 onToggleStar={() => handleToggleStar(selectedChat.id)}
-                                onArchive={view === "rejected" ? () => handleArchive(selectedChat.id) : undefined}
+                                onReject={view === "rejected" ? undefined : () => moveConversation(selectedChat.id, "reject")}
+                                onUnreject={view === "rejected" ? () => moveConversation(selectedChat.id, "unreject") : undefined}
                                 onBack={() => setSelectedId(null)}
                                 loading={detailLoading}
                                 error={detailError}
