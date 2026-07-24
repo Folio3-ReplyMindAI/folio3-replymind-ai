@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-const MIN_DURATION_MS = 1400;
+const MIN_DURATION_MS = 7000;
 
 /**
  * Gates the loading screen: becomes true once fonts + all page resources
- * have finished loading AND a short minimum display duration has elapsed.
- * The minimum (~1.4s) gives the landing page — Hero's layout measurements,
- * images, fonts — a moment to settle behind the splash before it's revealed,
- * without holding the visitor on a "Loading…" screen long enough to feel
- * broken. The Promise.race below caps the wait at this same bound so a hung
+ * have finished loading AND a minimum display duration has elapsed. The
+ * minimum (~7s) gives the landing page — Hero's layout measurements, images,
+ * fonts — time to fully settle behind the splash before it's revealed. The
+ * Promise.race below caps the wait at this same bound so a hung
  * font/subresource can never leave the splash up indefinitely.
  */
 export function useAppReady(): boolean {
