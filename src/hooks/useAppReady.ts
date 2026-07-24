@@ -25,7 +25,21 @@ export function useAppReady(): boolean {
         ? Promise.resolve()
         : new Promise<void>((resolve) => window.addEventListener("load", () => resolve(), { once: true }));
 
-    Promise.all([fontsReady, windowLoaded]).then(() => {
+    // Resource loading is best-effort only: a single external stylesheet/font
+    // that hangs (slow or blocked host — Fontshare, Google Fonts) would leave
+    // the `load` event permanently unfired, so Promise.all would never resolve
+    // and the splash would never dismiss (and, worse, the "seen" flag would
+    // never be written, trapping every subsequent refresh too). Racing the
+    // wait against MIN_DURATION_MS guarantees `ready` always flips — by which
+    // point the fill has finished anyway, so the UX is unchanged on a healthy
+    // load and simply no longer hangs on a broken one.
+    const settled = Promise.all([fontsReady, windowLoaded]);
+    const capped = Promise.race([
+      settled,
+      new Promise<void>((resolve) => setTimeout(resolve, MIN_DURATION_MS)),
+    ]);
+
+    capped.then(() => {
       if (!mounted) return;
       const remaining = Math.max(0, MIN_DURATION_MS - (Date.now() - start));
       setTimeout(() => {
