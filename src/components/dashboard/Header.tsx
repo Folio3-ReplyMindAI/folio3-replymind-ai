@@ -1,7 +1,19 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/src/lib/supabase/client";
+import { initialsAvatar } from "@/src/lib/utils/avatar";
 
 export default function Header({ onProfileClick, onMenuClick }) {
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            const url = session?.user?.user_metadata?.avatar_url;
+            if (url) setAvatarUrl(url);
+        });
+    }, []);
     return (
         <header className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4 sm:px-6 bg-white/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
             {/* Left — hamburger (mobile) + logo */}
@@ -34,7 +46,7 @@ export default function Header({ onProfileClick, onMenuClick }) {
                         <img
                             alt="Profile"
                             className="w-full h-full object-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvuz8Eh2dMUymOuL8i06E9aelD0w9Q2bGHIGBAerl63XhF7V5GIL1SFI3-0CSlCb4jXtaOsyYqDQpMNpOqYcY6OhkSn3IVJvrw4zWf_Dt5i5_fR-IMyUJFXh3ZccfqVxjzjCJxOBSKvz3Mfu_1TGaX5vmV-2Wfii8YBVMFPTP-VbiVeiOti5iWaEDR22_vuup9N-JnY172I9J_8NV9cEej-1qtikQNrvsws0hsecP_k9cFsxXZGNjQXAuFHyZYoGahVBN5b62MR8A"
+                            src={avatarUrl ?? initialsAvatar("U")}
                         />
                     </button>
                     <span className="pointer-events-none absolute -bottom-8 right-0 bg-on-surface text-surface-container-lowest text-xs font-medium px-2 py-1 rounded-lg opacity-0 group-hover/avatar:opacity-100 transition-opacity whitespace-nowrap shadow-md">

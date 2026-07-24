@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import EmailChannelCard from "@/src/components/channels/EmailChannelCard";
+import WhatsAppChannelCard from "@/src/components/channels/WhatsAppChannelCard";
 
 const DRAFT_OPTIONS = [
   { value: "most", label: "Most of them" },
@@ -138,6 +139,7 @@ export default function SettingsPage() {
 
         {/* Channels */}
         <EmailChannelCard />
+        <WhatsAppChannelCard />
 
         {/* Auto-Reply */}
         <section className="glass-card p-6 flex flex-col gap-5 !rounded-2xl hover:!translate-y-0">
