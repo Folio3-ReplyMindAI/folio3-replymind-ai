@@ -21,15 +21,6 @@ const CHANNELS = [
     iconBg: "bg-primary/10",
     badge: null,
   },
-  {
-    id: "website",
-    label: "Website Widget",
-    desc: "Embed a live chat widget on your website and handle messages from one place.",
-    icon: "web",
-    iconColor: "text-secondary",
-    iconBg: "bg-secondary/10",
-    badge: null,
-  },
 ];
 
 export default function Step3Channels({ onNext, onBack }) {

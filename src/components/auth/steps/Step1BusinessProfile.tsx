@@ -2,27 +2,17 @@
 import { useState } from "react";
 import { createClient } from "@/src/lib/supabase/client";
 
-const TONES = [
-  { value: "professional", label: "Professional" },
-  { value: "casual", label: "Casual" },
-  { value: "friendly", label: "Friendly" },
-];
-
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "ur", label: "Urdu" },
-  { value: "ar", label: "Arabic" },
-  { value: "fr", label: "French" },
-  { value: "es", label: "Spanish" },
-];
-
 const inputCls =
   "w-full rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary px-3 py-3 transition-all";
 
 export default function Step1BusinessProfile({ onNext }) {
   const [name, setName] = useState("");
-  const [tone, setTone] = useState("professional");
-  const [lang, setLang] = useState("en");
+  // The same three "Core Business Information" fields the Documents page shows.
+  // Saved into the tenant's business_profile blob so they persist and surface
+  // there (and on the Profile page) after onboarding.
+  const [operatingHours, setOperatingHours] = useState("");
+  const [location, setLocation] = useState("");
+  const [deliveryOptions, setDeliveryOptions] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -49,13 +39,22 @@ export default function Step1BusinessProfile({ onNext }) {
         return;
       }
 
+      // business_profile is shallow-merged server-side, so sending these keys
+      // here is exactly what the Documents page's "Save Info" writes later —
+      // both edit the same blob.
+      const businessProfile = {
+        operating_hours: operatingHours.trim(),
+        location: location.trim(),
+        delivery_options: deliveryOptions.trim(),
+      };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tenant`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ business_name: name, bot_persona: tone, bot_language: lang }),
+        body: JSON.stringify({ business_name: name, business_profile: businessProfile }),
       });
 
       if (!res.ok) {
@@ -64,7 +63,7 @@ export default function Step1BusinessProfile({ onNext }) {
         return;
       }
 
-      onNext({ business_name: name, bot_persona: tone, bot_language: lang });
+      onNext({ business_name: name, business_profile: businessProfile });
     } catch {
       setError("Could not reach the server. Please try again.");
     } finally {
@@ -79,7 +78,7 @@ export default function Step1BusinessProfile({ onNext }) {
           Set up your business profile
         </h1>
         <p className="text-sm text-on-surface-variant">
-          This helps the AI understand your tone and language when replying to customers.
+          Core business details the AI references instantly when replying to customers.
         </p>
       </div>
 
@@ -104,59 +103,51 @@ export default function Step1BusinessProfile({ onNext }) {
           {error && <p className="text-xs text-error mt-1.5">{error}</p>}
         </div>
 
-        {/* Communication Tone */}
+        {/* Business Hours */}
         <div>
           <label className="block text-[11px] font-medium text-on-surface-variant uppercase tracking-[0.06em] mb-1.5">
-            Communication Tone
+            Business Hours
           </label>
-          <div
-            className="grid gap-2 p-1 bg-surface-container-low rounded-xl border border-outline-variant/40"
-            style={{ gridTemplateColumns: `repeat(${TONES.length}, 1fr)` }}
-          >
-            {TONES.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setTone(t.value)}
-                className={`py-2 px-2 rounded-lg text-xs font-medium transition-all text-center ${
-                  tone === t.value
-                    ? "bg-primary text-on-primary shadow-sm"
-                    : "bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <p className="text-[11px] text-on-surface-variant/60 mt-1.5">
-            The AI will adopt this personality when replying to customers.
-          </p>
+          <textarea
+            rows={2}
+            className={`${inputCls} resize-none`}
+            placeholder="e.g. Mon–Fri: 9 AM – 6 PM"
+            value={operatingHours}
+            onChange={(e) => setOperatingHours(e.target.value)}
+          />
         </div>
 
-        {/* Primary Language */}
+        {/* Business Location */}
         <div>
           <label className="block text-[11px] font-medium text-on-surface-variant uppercase tracking-[0.06em] mb-1.5">
-            Primary Language
+            Business Location
           </label>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px]">
-              language
+              location_on
             </span>
-            <select
-              className={`${inputCls} pl-10 pr-8 appearance-none cursor-pointer`}
-              value={lang}
-              onChange={(e) => setLang(e.target.value)}
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px] pointer-events-none">
-              expand_more
-            </span>
+            <input
+              type="text"
+              className={`${inputCls} pl-10`}
+              placeholder="e.g. 123 Main Street, Lahore"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
           </div>
+        </div>
+
+        {/* Delivery Options & Rates */}
+        <div>
+          <label className="block text-[11px] font-medium text-on-surface-variant uppercase tracking-[0.06em] mb-1.5">
+            Delivery Options &amp; Rates
+          </label>
+          <textarea
+            rows={2}
+            className={`${inputCls} resize-none`}
+            placeholder="e.g. Free delivery on orders over $50"
+            value={deliveryOptions}
+            onChange={(e) => setDeliveryOptions(e.target.value)}
+          />
         </div>
       </div>
 
